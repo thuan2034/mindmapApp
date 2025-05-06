@@ -1,0 +1,399 @@
+/* Basic Reset & Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body, html {
+    height: 100%;
+    background-color: #f4f7f6; /* Light grey background for the page */
+    color: #333;
+}
+
+.sr-only { /* For accessibility, hide elements visually but keep them for screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    width: 70px;
+    background-color: #ffffff;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid #e0e0e0;
+}
+
+.sidebar-logo img {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 30px;
+    background-color: #ddd; /* Placeholder */
+    border-radius: 5px;
+}
+
+.sidebar ul {
+    list-style: none;
+    width: 100%;
+}
+
+.sidebar-item {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-item a {
+    color: #757575;
+    font-size: 20px;
+    padding: 10px 0;
+    display: block;
+    transition: color 0.3s, background-color 0.3s;
+}
+
+.sidebar-item a:hover,
+.sidebar-item.active a {
+    color: #d6336c; /* Accent color from image */
+}
+.sidebar-item.active {
+    border-right: 3px solid #d6336c;
+}
+
+
+/* Main Content Wrapper */
+.main-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevents scrollbars on the wrapper itself */
+}
+
+/* Top Bar */
+.topbar {
+    height: 60px;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 20px;
+    padding: 5px 15px;
+}
+
+.search-container .search-icon {
+    color: #757575;
+    margin-right: 8px;
+}
+
+.search-container input {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    padding: 8px 0;
+    width: 250px; /* Adjust as needed */
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #555;
+    margin-left: 20px;
+    position: relative;
+}
+.notification-btn .notification-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+    border: 1px solid white;
+}
+
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #ccc; /* Placeholder */
+    margin-right: 8px;
+}
+
+.user-profile span {
+    margin-right: 5px;
+    font-size: 14px;
+}
+
+/* Content Area */
+.content-area {
+    display: flex;
+    flex-grow: 1;
+    background-color: #f9f9f9; /* Slightly different bg for content panes */
+    padding: 15px;
+    gap: 15px; /* Space between panes */
+    overflow: hidden; /* Important for canvas scrolling if content overflows */
+}
+
+/* Editor Pane */
+.editor-pane {
+    width: 40%; /* Adjust width as needed */
+    max-width: 450px; /* Max width for editor */
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    overflow-y: auto; /* Scroll if content is too long */
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.editor-header h2 {
+    font-size: 1.4em;
+    color: #333;
+}
+
+.editor-header .back-btn,
+.editor-header .edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #777;
+}
+
+.editor-toolbar {
+    margin-bottom: 15px;
+    padding: 8px;
+    background-color: #f7f7f7;
+    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 5px;
+}
+
+.editor-toolbar button {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+}
+.editor-toolbar button:hover {
+    background-color: #e9e9e9;
+}
+.editor-toolbar button i {
+    pointer-events: none; /* Ensure clicks go to the button */
+}
+
+.editor-content {
+    flex-grow: 1; /* Take remaining space */
+    margin-bottom: 15px;
+}
+
+#node-input-area {
+    width: 100%;
+    height: 200px; /* Adjust as needed */
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 1em;
+    line-height: 1.6;
+    resize: vertical; /* Allow vertical resizing */
+    overflow-y: auto;
+    background-color: white;
+}
+#node-input-area:focus {
+    outline: none;
+    border-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+}
+#node-input-area[placeholder]:empty:before {
+    content: attr(placeholder);
+    color: #aaa;
+    pointer-events: none; /* Make placeholder non-interactive */
+}
+
+
+.save-btn {
+    background-color: #6fbf73; /* Green from image */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    align-self: flex-end; /* Align button to the right */
+    transition: background-color 0.3s;
+}
+
+.save-btn:hover {
+    background-color: #5aa760;
+}
+
+/* Canvas Pane */
+.canvas-pane {
+    flex-grow: 1;
+    background-color: #ffffff;
+    border-radius: 8px;
+    position: relative; /* For positioning nodes absolutely */
+    overflow: auto; /* Allows scrolling if mind map is large */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.mind-map-container {
+    width: 100%;
+    height: 100%;
+    position: relative; /* To position nodes within this container */
+}
+
+.node {
+    position: absolute;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+    cursor: grab;
+    border: 1px solid #ccc;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    min-width: 80px; /* Minimum width for a node */
+    background-color: #FFFFE0; /* Default yellow */
+    user-select: none; /* Prevent text selection when dragging node */
+}
+.node:active, .node.dragging { /* Added .dragging for clarity */
+    cursor: grabbing;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    z-index: 10; /* Bring to front when dragging */
+}
+.node.selected-canvas { /* Style for the node visually selected on canvas */
+    border-color: #d6336c;
+    box-shadow: 0 0 5px rgba(214, 51, 108, 0.5);
+}
+
+
+.add-node-btn-canvas {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #d6336c;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.add-node-btn-canvas:hover {
+    background-color: #b02758;
+}
+
+/* SVG lines for connections */
+.connector-line {
+    stroke: #888;
+    stroke-width: 2px;
+    fill: none;
+    pointer-events: none; /* Lines should not interfere with node interaction */
+}
+
+/* Responsive adjustments (very basic example) */
+@media (max-width: 900px) {
+    .editor-pane {
+        width: 100%; /* Stack editor and canvas on smaller screens */
+        max-width: none;
+        margin-bottom: 15px;
+        height: 50vh; /* Give editor a portion of height */
+    }
+    .content-area {
+        flex-direction: column;
+    }
+    .canvas-pane {
+        height: calc(50vh - 75px); /* Adjust based on padding and gap */
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+    }
+    .search-container {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+    .search-container input {
+        width: calc(100% - 30px);
+    }
+    .user-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .sidebar {
+        width: 50px; /* Slimmer sidebar */
+    }
+    .sidebar-logo img {
+        width: 30px;
+        height: 30px;
+    }
+    .sidebar-item a {
+        font-size: 18px;
+    }
+}
+
+.connection-source {
+    border: 2px solid #2196F3 !important;
+}

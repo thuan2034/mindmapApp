@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Mind Map UI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <img src="placeholder-logo.png" alt="Logo">
+            </div>
+            <ul>
+                <li class="sidebar-item active"><a href="#"><i class="fas fa-home"></i></a></li>
+                <li class="sidebar-item"><a href="#"><i class="fas fa-compass"></i></a></li>
+                <li class="sidebar-item"><a href="#"><i class="fas fa-bell"></i></a></li>
+                <li class="sidebar-item"><a href="#"><i class="fas fa-folder"></i></a></li>
+                <li class="sidebar-item"><a href="#"><i class="fas fa-cog"></i></a></li>
+            </ul>
+        </nav>
+
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search something here">
+                </div>
+                <div class="user-actions">
+                    <button class="action-btn notification-btn"><i class="fas fa-bell"></i><span
+                            class="notification-dot"></span></button>
+                    <div class="user-profile">
+                        <img src="placeholder-user.png" alt="User Avatar" class="user-avatar"> <span>User</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <main class="content-area">
+                <section class="editor-pane">
+                    <div class="editor-header">
+                        <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                        <h2>New node</h2>
+                        <button class="edit-btn"><i class="fas fa-pencil-alt"></i></button>
+                    </div>
+                    <div class="editor-toolbar">
+                        <button title="Bold" data-command="bold"><i class="fas fa-bold"></i></button>
+                        <button title="Italic" data-command="italic"><i class="fas fa-italic"></i></button>
+                        <button title="Underline" data-command="underline"><i class="fas fa-underline"></i></button>
+                        <button title="Strikethrough" data-command="strikethrough"><i
+                                class="fas fa-strikethrough"></i></button>
+                        <button title="Unordered List" data-command="insertUnorderedList"><i
+                                class="fas fa-list-ul"></i></button>
+                        <button title="Ordered List" data-command="insertOrderedList"><i
+                                class="fas fa-list-ol"></i></button>
+                        <!-- Inside the editor-toolbar div -->
+                        <button title="Connect Nodes" id="connectNodesButton"><i class="fas fa-link"></i></button>
+                    </div>
+                    <div class="editor-content">
+                        <label for="node-input-area" class="sr-only">Nội dung</label>
+                        <div id="node-input-area" contenteditable="true" placeholder="Nhập nội dung..."></div>
+                    </div>
+                    <button class="save-btn">Lưu</button>
+                </section>
+
+                <section class="canvas-pane">
+                    <div class="mind-map-container" id="mindMapContainer">
+                        <div class="node" id="node-lap-trinh-web"
+                            style="top: 200px; left: 350px; background-color: #FFC0CB;">Lập trình web</div>
+                        <div class="node" id="node-oop" style="top: 100px; left: 150px; background-color: #FFFFE0;">OOP
+                        </div>
+                        <div class="node" id="node-csdl" style="top: 100px; left: 550px; background-color: #FFFFE0;">
+                            CSDL</div>
+                        <div class="node" id="node-new" style="top: 300px; left: 150px; background-color: #FFFFE0;">New
+                            node</div>
+                        <div class="node" id="node-uiux" style="top: 300px; left: 550px; background-color: #FFFFE0;">
+                            UI/UX</div>
+
+                    </div>
+                    <button id="addNodeButton" class="add-node-btn-canvas" title="Add new node to canvas">+</button>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
