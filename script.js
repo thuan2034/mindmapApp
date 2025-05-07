@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const minimapIndicator = document.querySelector(".minimap-indicator");
   const resizableDivider = document.querySelector(".resizable-divider");
   const editorPane = document.querySelector(".editor-pane");
+  const switchToTextButton = document.getElementById("switchToTextButton");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -39,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let panStartX, panStartY;
   let panOffsetX = 0;
   let panOffsetY = 0;
+  let pendingChanges = null; // Store pending changes before save
 
   // ===== Resizable Divider Functionality =====
   let isResizing = false;
@@ -65,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isResizing) return;
 
       const width = startWidth + (e.pageX - startX);
-      const minWidth = 300;
+      const minWidth = 0;
       const maxWidth = 800;
       
       if (width >= minWidth && width <= maxWidth) {
@@ -172,9 +174,10 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Determine content type based on available data
       if (nodeData.fileData) {
-        contentTypeSelector.value = 'file';
-        switchContentType('file');
-        fileViewerArea.innerHTML = '';
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "block";
+        uploadFileToolbarButton.style.display = "none";
+        switchToTextButton.style.display = "inline-block";
         
         if (nodeData.fileData.type.startsWith('image/')) {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
@@ -199,9 +202,11 @@ document.addEventListener("DOMContentLoaded", () => {
         linkUrlInput.value = nodeData.linkData.url || '';
         linkTextInput.value = nodeData.linkData.text || '';
       } else {
-        contentTypeSelector.value = 'text';
-        switchContentType('text');
-        nodeInputArea.innerHTML = nodeData.contentHtml || '';
+        nodeInputArea.style.display = "block";
+        fileViewerArea.style.display = "none";
+        uploadFileToolbarButton.style.display = "inline-block";
+        switchToTextButton.style.display = "none";
+        nodeInputArea.innerHTML = nodeData.contentHtml;
       }
       
       updateNodeSelectionVisual();
@@ -429,31 +434,35 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (selectedNodeId) {
-        const nodeData = nodes.find((n) => n.id === selectedNodeId);
-        if (nodeData) {
-          // Clear other content types
-          delete nodeData.contentHtml;
-          delete nodeData.contentText;
-          delete nodeData.linkData;
-          
-          // Create a new fileData object for this node
-          nodeData.fileData = {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            url: fileUrl
-          };
+        // Store pending changes instead of applying immediately
+        pendingChanges = {
+          type: 'file',
+          fileData: fileData,
+          fileIcon: fileIcon
+        };
 
-          const originalName = nodeData.name || "New Node";
-          nodeData.name = originalName;
-          const nodeEl = document.getElementById(selectedNodeId);
-          if (nodeEl) {
-            nodeEl.dataset.fileData = JSON.stringify(nodeData.fileData);
-            nodeEl.innerHTML = fileIcon + escapeHTML(originalName);
-          }
-          // Update content type selector and switch to file view
-          contentTypeSelector.value = 'file';
-          switchContentType('file');
+        // Show preview in editor
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "block";
+        uploadFileToolbarButton.style.display = "none";
+        switchToTextButton.style.display = "inline-block";
+        
+        if (file.type.startsWith('image/')) {
+          fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
+        } else if (file.type === 'application/pdf') {
+          fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
+        } else if (file.type.startsWith('video/')) {
+          fileViewerArea.innerHTML = `
+            <video controls style="max-width: 100%; max-height: 100%;">
+              <source src="${fileUrl}" type="${file.type}">
+              Your browser does not support the video tag.
+            </video>`;
+        } else if (file.type.startsWith('audio/')) {
+          fileViewerArea.innerHTML = `
+            <audio controls style="width: 100%; margin: 20px 0;">
+              <source src="${fileUrl}" type="${file.type}">
+              Your browser does not support the audio tag.
+            </audio>`;
         }
       } else {
         const canvasPane = document.querySelector('.canvas-pane');
@@ -485,46 +494,99 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Node Title Editing
+  const editBtn = document.querySelector(".edit-btn");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      const titleElement = editorTitle;
+      titleElement.contentEditable = true;
+      titleElement.focus();
+    });
+  }
+
+  // Switch to Text Button
+  if (switchToTextButton) {
+    switchToTextButton.addEventListener("click", () => {
+      if (selectedNodeId) {
+        // Store pending change to switch to text mode
+        pendingChanges = {
+          type: 'switchToText'
+        };
+        
+        // Show text editor preview
+        nodeInputArea.style.display = "block";
+        fileViewerArea.style.display = "none";
+        uploadFileToolbarButton.style.display = "inline-block";
+        switchToTextButton.style.display = "none";
+        nodeInputArea.innerHTML = "";
+      }
+    });
+  }
+
   // Save Button
   if (saveBtn) {
     saveBtn.addEventListener("click", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
         if (nodeData) {
-          const contentType = contentTypeSelector.value;
+          const newName = editorTitle.textContent.trim();
           
-          // Clear all content types first
-          delete nodeData.contentHtml;
-          delete nodeData.contentText;
-          delete nodeData.fileData;
-          delete nodeData.linkData;
-          
-          if (contentType === 'text') {
+          if (pendingChanges) {
+            if (pendingChanges.type === 'file') {
+              // Apply pending file changes
+              nodeData.fileData = pendingChanges.fileData;
+              nodeData.name = newName; // Update name even with file
+              const nodeEl = document.getElementById(selectedNodeId);
+              if (nodeEl) {
+                nodeEl.dataset.fileData = JSON.stringify(pendingChanges.fileData);
+                nodeEl.innerHTML = pendingChanges.fileIcon + escapeHTML(newName);
+              }
+            } else if (pendingChanges.type === 'switchToText') {
+              // Apply switch to text changes
+              nodeData.fileData = null;
+              nodeData.name = newName; // Update name when switching to text
+              const nodeEl = document.getElementById(selectedNodeId);
+              if (nodeEl) {
+                nodeEl.removeAttribute('data-file-data');
+                nodeEl.innerHTML = escapeHTML(newName);
+              }
+            }
+            pendingChanges = null;
+          } else if (!nodeData.fileData) {
+            // Apply text content changes
             const currentHtmlContent = nodeInputArea.innerHTML;
             const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+            
+            // Update node data
             nodeData.contentHtml = currentHtmlContent;
             nodeData.contentText = currentTextContent;
+            nodeData.name = newName;
 
+            // Update node display
             const nodeElement = document.getElementById(selectedNodeId);
             if (nodeElement) {
               nodeElement.dataset.contentHtml = currentHtmlContent;
               nodeElement.dataset.contentText = currentTextContent;
-              nodeElement.innerHTML = escapeHTML(nodeData.name);
+              nodeElement.textContent = newName;
             }
-          } else if (contentType === 'link') {
-            const url = linkUrlInput.value.trim();
-            const text = linkTextInput.value.trim();
-            if (url) {
-              nodeData.linkData = { url, text };
-
-              const nodeElement = document.getElementById(selectedNodeId);
-              if (nodeElement) {
-                const linkText = text || url;
-                nodeElement.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(linkText)}`;
+          } else {
+            // Update only the name for nodes with files
+            nodeData.name = newName;
+            const nodeEl = document.getElementById(selectedNodeId);
+            if (nodeEl) {
+              let fileIcon = '';
+              if (nodeData.fileData.type.startsWith('image/')) {
+                fileIcon = '<i class="fas fa-image"></i> ';
+              } else if (nodeData.fileData.type === 'application/pdf') {
+                fileIcon = '<i class="fas fa-file-pdf"></i> ';
+              } else if (nodeData.fileData.type.startsWith('video/')) {
+                fileIcon = '<i class="fas fa-video"></i> ';
+              } else if (nodeData.fileData.type.startsWith('audio/')) {
+                fileIcon = '<i class="fas fa-music"></i> ';
               }
+              nodeEl.innerHTML = fileIcon + escapeHTML(newName);
             }
           }
-          // Note: File content is handled by the file upload handler
         }
       } else {
         const contentType = contentTypeSelector.value;
@@ -583,37 +645,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Node Title Editing
-  const editBtn = document.querySelector(".edit-btn");
-  if (editBtn) {
-    editBtn.addEventListener("click", () => {
-      const titleElement = editorTitle;
-      titleElement.contentEditable = true;
-      titleElement.focus();
-
-      const finishEditing = () => {
-        titleElement.contentEditable = false;
-        const newName = titleElement.textContent.trim();
-        if (selectedNodeId && newName) {
-          const node = nodes.find((n) => n.id === selectedNodeId);
-          if (node) {
-            node.name = newName;
-            const nodeEl = document.getElementById(selectedNodeId);
-            if (nodeEl) nodeEl.textContent = newName;
-          }
-        }
-      };
-
-      titleElement.addEventListener("blur", finishEditing);
-      titleElement.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          finishEditing();
-        }
-      });
-    });
-  }
-
   // Delete Node Button
   if (deleteNodeBtn) {
     deleteNodeBtn.addEventListener("click", () => {
@@ -626,6 +657,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Search Functionality =====
+  let currentSearchResults = [];
+  let currentSearchIndex = -1;
+
   function searchNodes(query) {
     // Remove previous search highlights
     document.querySelectorAll('.node.search-highlight').forEach(node => {
@@ -633,27 +667,83 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (!query.trim()) {
+      currentSearchResults = [];
+      currentSearchIndex = -1;
+      document.querySelector('.search-navigation').classList.remove('active');
       return;
     }
 
-    const searchResults = nodes.filter(node => 
+    currentSearchResults = nodes.filter(node => 
       node.name.toLowerCase().includes(query.toLowerCase())
     );
 
     // Highlight matching nodes
-    searchResults.forEach(node => {
+    currentSearchResults.forEach(node => {
       const nodeElement = document.getElementById(node.id);
       if (nodeElement) {
         nodeElement.classList.add('search-highlight');
       }
     });
 
-    // If there's exactly one match, select it
-    if (searchResults.length === 1) {
-      selectNode(searchResults[0].id);
+    // Update navigation controls
+    const searchNav = document.querySelector('.search-navigation');
+    const resultCount = searchNav.querySelector('.result-count');
+    const prevBtn = document.getElementById('prevResultBtn');
+    const nextBtn = document.getElementById('nextResultBtn');
+
+    if (currentSearchResults.length > 0) {
+      searchNav.classList.add('active');
+      currentSearchIndex = 0;
+      resultCount.textContent = `1/${currentSearchResults.length}`;
+      prevBtn.disabled = true;
+      nextBtn.disabled = currentSearchResults.length === 1;
+      centerOnNode(currentSearchResults[0]);
+    } else {
+      searchNav.classList.remove('active');
+      currentSearchIndex = -1;
     }
 
-    return searchResults;
+    return currentSearchResults;
+  }
+
+  function centerOnNode(node) {
+    const nodeElement = document.getElementById(node.id);
+    if (nodeElement) {
+      selectNode(node.id);
+      
+      const canvasPane = document.querySelector('.canvas-pane');
+      const paneRect = canvasPane.getBoundingClientRect();
+      
+      // Calculate the center position of the node
+      const nodeCenterX = node.x + (nodeElement.offsetWidth / 2);
+      const nodeCenterY = node.y + (nodeElement.offsetHeight / 2);
+      
+      // Calculate the pan offset needed to center the node in the viewport
+      panOffsetX = (paneRect.width / (2 * currentZoom)) - nodeCenterX;
+      panOffsetY = (paneRect.height / (2 * currentZoom)) - nodeCenterY;
+      
+      // Apply the transform
+      mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+      updateMinimap();
+    }
+  }
+
+  function navigateSearchResults(direction) {
+    if (currentSearchResults.length === 0) return;
+
+    const prevBtn = document.getElementById('prevResultBtn');
+    const nextBtn = document.getElementById('nextResultBtn');
+    const resultCount = document.querySelector('.result-count');
+
+    currentSearchIndex = (currentSearchIndex + direction + currentSearchResults.length) % currentSearchResults.length;
+    resultCount.textContent = `${currentSearchIndex + 1}/${currentSearchResults.length}`;
+    
+    // Update button states
+    prevBtn.disabled = currentSearchIndex === 0;
+    nextBtn.disabled = currentSearchIndex === currentSearchResults.length - 1;
+
+    // Center on the selected node
+    centerOnNode(currentSearchResults[currentSearchIndex]);
   }
 
   // Search Input
@@ -663,23 +753,8 @@ document.addEventListener("DOMContentLoaded", () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         const query = e.target.value.trim();
-        const results = searchNodes(query);
-        
-        // Update search results count if needed
-        const searchContainer = searchInput.closest('.search-container');
-        let resultsCount = searchContainer.querySelector('.search-results-count');
-        
-        if (query && results) {
-          if (!resultsCount) {
-            resultsCount = document.createElement('span');
-            resultsCount.className = 'search-results-count';
-            searchContainer.appendChild(resultsCount);
-          }
-          resultsCount.textContent = `${results.length} result${results.length !== 1 ? 's' : ''}`;
-        } else if (resultsCount) {
-          resultsCount.remove();
-        }
-      }, 300); // Debounce search for better performance
+        searchNodes(query);
+      }, 300);
     });
 
     // Clear search on escape
@@ -689,32 +764,46 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll('.node.search-highlight').forEach(node => {
           node.classList.remove('search-highlight');
         });
-        const resultsCount = searchInput.closest('.search-container').querySelector('.search-results-count');
-        if (resultsCount) {
-          resultsCount.remove();
-        }
+        document.querySelector('.search-navigation').classList.remove('active');
+        currentSearchResults = [];
+        currentSearchIndex = -1;
       }
     });
   }
+
+  // Search Navigation Buttons
+  const prevResultBtn = document.getElementById('prevResultBtn');
+  const nextResultBtn = document.getElementById('nextResultBtn');
+
+  if (prevResultBtn) {
+    prevResultBtn.addEventListener('click', () => navigateSearchResults(-1));
+  }
+
+  if (nextResultBtn) {
+    nextResultBtn.addEventListener('click', () => navigateSearchResults(1));
+  }
+
+  // Keyboard navigation for search results
+  document.addEventListener('keydown', (e) => {
+    if (currentSearchResults.length > 0) {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateSearchResults(-1);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateSearchResults(1);
+      }
+    }
+  });
 
   // ===== Initialization =====
   function initializeStaticNodes() {
     const staticNodeElements = mindMapContainer.querySelectorAll('.node:not([id^="node-generated-"])');
     let maxIdNum = 0;
 
-    // Calculate center position
-    const canvasWidth = mindMapContainer.offsetWidth;
-    const canvasHeight = mindMapContainer.offsetHeight;
-    const centerX = canvasWidth / 2;
-    const centerY = canvasHeight / 2;
-
-    // Define positions for child nodes relative to center
-    const childPositions = {
-      "node-oop": { x: -200, y: -100 },    // Top left
-      "node-csdl": { x: 200, y: -100 },    // Top right
-      "node-new": { x: -200, y: 100 },     // Bottom left
-      "node-uiux": { x: 200, y: 100 }      // Bottom right
-    };
+    // Calculate center of the canvas
+    const centerX = mindMapContainer.offsetWidth / 2;
+    const centerY = mindMapContainer.offsetHeight / 2;
 
     staticNodeElements.forEach((nodeEl) => {
       if (nodes.find((n) => n.id === nodeEl.id)) return;
@@ -726,19 +815,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const nameText = nodeEl.textContent.trim();
       const initialColor = nodeEl.style.backgroundColor || "#FFFFE0";
       
-      // Position nodes relative to center
+      // Calculate position relative to center
       let x, y;
       if (nodeEl.id === "node-lap-trinh-web") {
-        x = centerX - 100; // Center node
-        y = centerY - 25;
-      } else if (childPositions[nodeEl.id]) {
-        // Position child nodes relative to center
-        x = centerX + childPositions[nodeEl.id].x;
-        y = centerY + childPositions[nodeEl.id].y;
-      } else {
-        // Default position for any other nodes
         x = centerX;
         y = centerY;
+      } else if (nodeEl.id === "node-oop") {
+        x = centerX - 200;
+        y = centerY - 100;
+      } else if (nodeEl.id === "node-csdl") {
+        x = centerX + 200;
+        y = centerY - 100;
+      } else if (nodeEl.id === "node-new") {
+        x = centerX - 200;
+        y = centerY + 100;
+      } else if (nodeEl.id === "node-uiux") {
+        x = centerX + 200;
+        y = centerY + 100;
       }
 
       const newNodeData = {
@@ -775,15 +868,28 @@ document.addEventListener("DOMContentLoaded", () => {
     updateNodeSelectionVisual();
   }
 
+  // Function to center the view on the canvas
+  function centerView() {
+    const canvasPane = document.querySelector('.canvas-pane');
+    const paneRect = canvasPane.getBoundingClientRect();
+    
+    // Calculate the center of the canvas
+    const centerX = mindMapContainer.offsetWidth / 2;
+    const centerY = mindMapContainer.offsetHeight / 2;
+    
+    // Calculate the pan offset needed to center the view
+    panOffsetX = (paneRect.width / (2 * currentZoom)) - centerX;
+    panOffsetY = (paneRect.height / (2 * currentZoom)) - centerY;
+    
+    // Apply the transform
+    mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+    updateMinimap();
+  }
+
   // Initialize the application
   initializeStaticNodes();
   updateConnections();
-
-  // Center view on the root node after initialization
-  const rootNode = nodes.find(n => n.id === "node-lap-trinh-web");
-  if (rootNode) {
-    centerViewOn(rootNode.x, rootNode.y);
-  }
+  centerView(); // Center the view after initialization
 
   // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
@@ -822,8 +928,27 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetZoomBtn) {
     resetZoomBtn.addEventListener('click', () => {
       currentZoom = 1;
-      panOffsetX = 0;
-      panOffsetY = 0;
+      // Find the root node
+      const rootNode = nodes.find(n => n.id === "node-lap-trinh-web");
+      if (rootNode) {
+        const nodeElement = document.getElementById(rootNode.id);
+        if (nodeElement) {
+          const canvasPane = document.querySelector('.canvas-pane');
+          const paneRect = canvasPane.getBoundingClientRect();
+          
+          // Calculate the center position of the node
+          const nodeCenterX = rootNode.x + (nodeElement.offsetWidth / 2);
+          const nodeCenterY = rootNode.y + (nodeElement.offsetHeight / 2);
+          
+          // Calculate the pan offset needed to center the node in the viewport
+          panOffsetX = (paneRect.width / 2) - nodeCenterX;
+          panOffsetY = (paneRect.height / 2) - nodeCenterY;
+        }
+      } else {
+        // If no root node found, reset to default center
+        panOffsetX = 0;
+        panOffsetY = 0;
+      }
       updateZoom(1);
     });
   }
