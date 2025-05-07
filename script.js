@@ -3,6 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const mindMapContainer = document.getElementById("mindMapContainer");
   const nodeInputArea = document.getElementById("node-input-area");
   const fileViewerArea = document.getElementById("file-viewer-area");
+  const linkInputArea = document.getElementById("link-input-area");
+  const linkUrlInput = document.getElementById("linkUrlInput");
+  const linkTextInput = document.getElementById("linkTextInput");
+  const contentTypeSelector = document.getElementById("contentTypeSelector");
   const saveBtn = document.querySelector(".save-btn");
   const editorTitle = document.querySelector(".editor-pane h2");
   const addNodeButton = document.getElementById("addNodeButton");
@@ -166,9 +170,11 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
       
+      // Determine content type based on available data
       if (nodeData.fileData) {
-        nodeInputArea.style.display = "none";
-        fileViewerArea.style.display = "block";
+        contentTypeSelector.value = 'file';
+        switchContentType('file');
+        fileViewerArea.innerHTML = '';
         
         if (nodeData.fileData.type.startsWith('image/')) {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
@@ -187,10 +193,15 @@ document.addEventListener("DOMContentLoaded", () => {
               Your browser does not support the audio tag.
             </audio>`;
         }
+      } else if (nodeData.linkData) {
+        contentTypeSelector.value = 'link';
+        switchContentType('link');
+        linkUrlInput.value = nodeData.linkData.url || '';
+        linkTextInput.value = nodeData.linkData.text || '';
       } else {
-        nodeInputArea.style.display = "block";
-        fileViewerArea.style.display = "none";
-        nodeInputArea.innerHTML = nodeData.contentHtml;
+        contentTypeSelector.value = 'text';
+        switchContentType('text');
+        nodeInputArea.innerHTML = nodeData.contentHtml || '';
       }
       
       updateNodeSelectionVisual();
@@ -288,9 +299,11 @@ document.addEventListener("DOMContentLoaded", () => {
     nodeClickPrevented = false;
 
     const rect = activeDraggableNode.getBoundingClientRect();
-    // Calculate drag offset considering zoom and pan
-    dragOffsetX = (e.clientX - rect.left) / currentZoom;
-    dragOffsetY = (e.clientY - rect.top) / currentZoom;
+    const containerRect = mindMapContainer.getBoundingClientRect();
+    
+    // Calculate drag offset considering zoom, pan, and container position
+    dragOffsetX = (e.clientX - containerRect.left) / currentZoom - panOffsetX - parseInt(activeDraggableNode.style.left);
+    dragOffsetY = (e.clientY - containerRect.top) / currentZoom - panOffsetY - parseInt(activeDraggableNode.style.top);
 
     activeDraggableNode.classList.add("dragging");
     activeDraggableNode.style.zIndex = 1000;
@@ -418,34 +431,54 @@ document.addEventListener("DOMContentLoaded", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
         if (nodeData) {
-          nodeData.fileData = fileData;
-          // Keep original name and append file info
+          // Clear other content types
+          delete nodeData.contentHtml;
+          delete nodeData.contentText;
+          delete nodeData.linkData;
+          
+          // Create a new fileData object for this node
+          nodeData.fileData = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            url: fileUrl
+          };
+
           const originalName = nodeData.name || "New Node";
           nodeData.name = originalName;
           const nodeEl = document.getElementById(selectedNodeId);
           if (nodeEl) {
-            nodeEl.dataset.fileData = JSON.stringify(fileData);
-            // Show original name with file icon
+            nodeEl.dataset.fileData = JSON.stringify(nodeData.fileData);
             nodeEl.innerHTML = fileIcon + escapeHTML(originalName);
           }
-          loadNodeInEditor(selectedNodeId);
+          // Update content type selector and switch to file view
+          contentTypeSelector.value = 'file';
+          switchContentType('file');
         }
       } else {
-        // For new nodes, place in center of viewport
         const canvasPane = document.querySelector('.canvas-pane');
         const paneRect = canvasPane.getBoundingClientRect();
         
-        // Calculate the center of the visible area, taking into account zoom and pan
         const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
         const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
         
-        // For new nodes, use a default name with file info
         const defaultName = "New Node";
-        addNode(defaultName, centerX, centerY, "#FFFFE0", "", fileData);
+        const nodeData = addNode(defaultName, centerX, centerY, "#FFFFE0");
+        // Create a new fileData object for this node
+        nodeData.fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          url: fileUrl
+        };
         const newNodeEl = document.getElementById(`node-generated-${nodeIdCounter}`);
         if (newNodeEl) {
           newNodeEl.innerHTML = fileIcon + escapeHTML(defaultName);
         }
+        // Update content type selector and switch to file view
+        contentTypeSelector.value = 'file';
+        switchContentType('file');
+        loadNodeInEditor(nodeData.id);
       }
 
       nodeFileInput.value = "";
@@ -458,25 +491,62 @@ document.addEventListener("DOMContentLoaded", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
         if (nodeData) {
-          if (nodeData.fileData) {
-            return;
-          }
-          const currentHtmlContent = nodeInputArea.innerHTML;
-          const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
-          nodeData.contentHtml = currentHtmlContent;
-          nodeData.contentText = currentTextContent;
+          const contentType = contentTypeSelector.value;
+          
+          // Clear all content types first
+          delete nodeData.contentHtml;
+          delete nodeData.contentText;
+          delete nodeData.fileData;
+          delete nodeData.linkData;
+          
+          if (contentType === 'text') {
+            const currentHtmlContent = nodeInputArea.innerHTML;
+            const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+            nodeData.contentHtml = currentHtmlContent;
+            nodeData.contentText = currentTextContent;
 
-          const nodeElement = document.getElementById(selectedNodeId);
-          if (nodeElement) {
-            nodeElement.dataset.contentHtml = currentHtmlContent;
-            nodeElement.dataset.contentText = currentTextContent;
+            const nodeElement = document.getElementById(selectedNodeId);
+            if (nodeElement) {
+              nodeElement.dataset.contentHtml = currentHtmlContent;
+              nodeElement.dataset.contentText = currentTextContent;
+              nodeElement.innerHTML = escapeHTML(nodeData.name);
+            }
+          } else if (contentType === 'link') {
+            const url = linkUrlInput.value.trim();
+            const text = linkTextInput.value.trim();
+            if (url) {
+              nodeData.linkData = { url, text };
+
+              const nodeElement = document.getElementById(selectedNodeId);
+              if (nodeElement) {
+                const linkText = text || url;
+                nodeElement.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(linkText)}`;
+              }
+            }
           }
+          // Note: File content is handled by the file upload handler
         }
       } else {
-        const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
-        const currentHtmlContent = nodeInputArea.innerHTML;
-        if (currentTextContent.trim() || currentHtmlContent.trim()) {
-          addNode("New Node", 70, 70, "#FFFFE0", currentHtmlContent);
+        const contentType = contentTypeSelector.value;
+        if (contentType === 'text') {
+          const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+          const currentHtmlContent = nodeInputArea.innerHTML;
+          if (currentTextContent.trim() || currentHtmlContent.trim()) {
+            const nodeData = addNode("New Node", 70, 70, "#FFFFE0");
+            nodeData.contentHtml = currentHtmlContent;
+            nodeData.contentText = currentTextContent;
+          }
+        } else if (contentType === 'link') {
+          const url = linkUrlInput.value.trim();
+          const text = linkTextInput.value.trim();
+          if (url) {
+            const nodeData = addNode(text || "New Link", 70, 70, "#FFFFE0");
+            nodeData.linkData = { url, text };
+            const nodeElement = document.getElementById(nodeData.id);
+            if (nodeElement) {
+              nodeElement.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(text || url)}`;
+            }
+          }
         }
       }
     });
@@ -632,6 +702,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const staticNodeElements = mindMapContainer.querySelectorAll('.node:not([id^="node-generated-"])');
     let maxIdNum = 0;
 
+    // Calculate center position
+    const canvasWidth = mindMapContainer.offsetWidth;
+    const canvasHeight = mindMapContainer.offsetHeight;
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+
+    // Define positions for child nodes relative to center
+    const childPositions = {
+      "node-oop": { x: -200, y: -100 },    // Top left
+      "node-csdl": { x: 200, y: -100 },    // Top right
+      "node-new": { x: -200, y: 100 },     // Bottom left
+      "node-uiux": { x: 200, y: 100 }      // Bottom right
+    };
+
     staticNodeElements.forEach((nodeEl) => {
       if (nodes.find((n) => n.id === nodeEl.id)) return;
 
@@ -641,19 +725,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const nameText = nodeEl.textContent.trim();
       const initialColor = nodeEl.style.backgroundColor || "#FFFFE0";
+      
+      // Position nodes relative to center
+      let x, y;
+      if (nodeEl.id === "node-lap-trinh-web") {
+        x = centerX - 100; // Center node
+        y = centerY - 25;
+      } else if (childPositions[nodeEl.id]) {
+        // Position child nodes relative to center
+        x = centerX + childPositions[nodeEl.id].x;
+        y = centerY + childPositions[nodeEl.id].y;
+      } else {
+        // Default position for any other nodes
+        x = centerX;
+        y = centerY;
+      }
+
       const newNodeData = {
         id: nodeEl.id,
         name: nameText,
         contentHtml: escapeHTML(nameText),
         contentText: nameText,
-        x: parseInt(nodeEl.style.left || "50", 10),
-        y: parseInt(nodeEl.style.top || "50", 10),
+        x: x,
+        y: y,
         color: initialColor,
         connections: [],
       };
       nodes.push(newNodeData);
       nodeEl.dataset.contentHtml = newNodeData.contentHtml;
       nodeEl.dataset.contentText = newNodeData.contentText;
+      nodeEl.style.left = x + "px";
+      nodeEl.style.top = y + "px";
       nodeEl.addEventListener("mousedown", onNodeMouseDown);
     });
 
@@ -676,6 +778,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize the application
   initializeStaticNodes();
   updateConnections();
+
+  // Center view on the root node after initialization
+  const rootNode = nodes.find(n => n.id === "node-lap-trinh-web");
+  if (rootNode) {
+    centerViewOn(rootNode.x, rootNode.y);
+  }
 
   // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
@@ -824,5 +932,82 @@ document.addEventListener("DOMContentLoaded", () => {
         nodeContainer.appendChild(nodeIndicator);
       }
     });
+  }
+
+  // ===== Content Type Management =====
+  function switchContentType(type) {
+    nodeInputArea.style.display = type === 'text' ? 'block' : 'none';
+    fileViewerArea.style.display = type === 'file' ? 'block' : 'none';
+    linkInputArea.style.display = type === 'link' ? 'block' : 'none';
+    
+    // Update toolbar buttons visibility
+    const toolbarButtons = editorToolbar.querySelectorAll('button');
+    toolbarButtons.forEach(button => {
+      if (button.id === 'uploadFileToolbarButton') {
+        button.style.display = type === 'file' ? 'inline-block' : 'none';
+      } else if (button.dataset.command) {
+        button.style.display = type === 'text' ? 'inline-block' : 'none';
+      }
+    });
+
+    // Don't clear content when switching types if we have a selected node
+    if (selectedNodeId) {
+      const nodeData = nodes.find((n) => n.id === selectedNodeId);
+      if (nodeData) {
+        if (type === 'text') {
+          nodeInputArea.innerHTML = nodeData.contentHtml || '';
+        } else if (type === 'file' && nodeData.fileData) {
+          fileViewerArea.innerHTML = '';
+          // Create a new URL for this specific node's file
+          const fileUrl = nodeData.fileData.url;
+          if (nodeData.fileData.type.startsWith('image/')) {
+            fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
+          } else if (nodeData.fileData.type === 'application/pdf') {
+            fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
+          } else if (nodeData.fileData.type.startsWith('video/')) {
+            fileViewerArea.innerHTML = `
+              <video controls style="max-width: 100%; max-height: 100%;">
+                <source src="${fileUrl}" type="${nodeData.fileData.type}">
+                Your browser does not support the video tag.
+              </video>`;
+          } else if (nodeData.fileData.type.startsWith('audio/')) {
+            fileViewerArea.innerHTML = `
+              <audio controls style="width: 100%; margin: 20px 0;">
+                <source src="${fileUrl}" type="${nodeData.fileData.type}">
+                Your browser does not support the audio tag.
+              </audio>`;
+          }
+        } else if (type === 'link' && nodeData.linkData) {
+          linkUrlInput.value = nodeData.linkData.url || '';
+          linkTextInput.value = nodeData.linkData.text || '';
+        }
+      }
+    }
+  }
+
+  if (contentTypeSelector) {
+    contentTypeSelector.addEventListener('change', (e) => {
+      const selectedType = e.target.value;
+      switchContentType(selectedType);
+      
+      // If switching to file type and no file is selected, trigger file input
+      if (selectedType === 'file' && !selectedNodeId) {
+        nodeFileInput.click();
+      }
+    });
+  }
+
+  // Add function to center view on a specific position
+  function centerViewOn(x, y) {
+    const canvasPane = document.querySelector('.canvas-pane');
+    const paneRect = canvasPane.getBoundingClientRect();
+    
+    // Calculate the pan offset needed to center the view
+    panOffsetX = -(x - paneRect.width / (2 * currentZoom));
+    panOffsetY = -(y - paneRect.height / (2 * currentZoom));
+    
+    // Apply the transform
+    mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+    updateMinimap();
   }
 });

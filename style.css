@@ -292,6 +292,27 @@ body, html {
     pointer-events: none; /* Ensure clicks go to the button */
 }
 
+.content-type-selector {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.content-type-selector:hover {
+    border-color: #d6336c;
+}
+
+.content-type-selector:focus {
+    outline: none;
+    border-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+}
+
 .editor-content {
     flex-grow: 1; /* Take remaining space */
     margin-bottom: 15px;
