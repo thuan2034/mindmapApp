@@ -288,9 +288,11 @@ document.addEventListener("DOMContentLoaded", () => {
     nodeClickPrevented = false;
 
     const rect = activeDraggableNode.getBoundingClientRect();
-    // Calculate drag offset considering zoom and pan
-    dragOffsetX = (e.clientX - rect.left) / currentZoom;
-    dragOffsetY = (e.clientY - rect.top) / currentZoom;
+    const containerRect = mindMapContainer.getBoundingClientRect();
+    
+    // Calculate drag offset considering zoom, pan, and container position
+    dragOffsetX = (e.clientX - containerRect.left) / currentZoom - panOffsetX - parseInt(activeDraggableNode.style.left);
+    dragOffsetY = (e.clientY - containerRect.top) / currentZoom - panOffsetY - parseInt(activeDraggableNode.style.top);
 
     activeDraggableNode.classList.add("dragging");
     activeDraggableNode.style.zIndex = 1000;
@@ -632,6 +634,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const staticNodeElements = mindMapContainer.querySelectorAll('.node:not([id^="node-generated-"])');
     let maxIdNum = 0;
 
+    // Calculate center of the canvas
+    const centerX = mindMapContainer.offsetWidth / 2;
+    const centerY = mindMapContainer.offsetHeight / 2;
+
     staticNodeElements.forEach((nodeEl) => {
       if (nodes.find((n) => n.id === nodeEl.id)) return;
 
@@ -641,19 +647,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const nameText = nodeEl.textContent.trim();
       const initialColor = nodeEl.style.backgroundColor || "#FFFFE0";
+      
+      // Calculate position relative to center
+      let x, y;
+      if (nodeEl.id === "node-lap-trinh-web") {
+        x = centerX;
+        y = centerY;
+      } else if (nodeEl.id === "node-oop") {
+        x = centerX - 200;
+        y = centerY - 100;
+      } else if (nodeEl.id === "node-csdl") {
+        x = centerX + 200;
+        y = centerY - 100;
+      } else if (nodeEl.id === "node-new") {
+        x = centerX - 200;
+        y = centerY + 100;
+      } else if (nodeEl.id === "node-uiux") {
+        x = centerX + 200;
+        y = centerY + 100;
+      }
+
       const newNodeData = {
         id: nodeEl.id,
         name: nameText,
         contentHtml: escapeHTML(nameText),
         contentText: nameText,
-        x: parseInt(nodeEl.style.left || "50", 10),
-        y: parseInt(nodeEl.style.top || "50", 10),
+        x: x,
+        y: y,
         color: initialColor,
         connections: [],
       };
       nodes.push(newNodeData);
       nodeEl.dataset.contentHtml = newNodeData.contentHtml;
       nodeEl.dataset.contentText = newNodeData.contentText;
+      nodeEl.style.left = x + "px";
+      nodeEl.style.top = y + "px";
       nodeEl.addEventListener("mousedown", onNodeMouseDown);
     });
 
@@ -673,9 +701,28 @@ document.addEventListener("DOMContentLoaded", () => {
     updateNodeSelectionVisual();
   }
 
+  // Function to center the view on the canvas
+  function centerView() {
+    const canvasPane = document.querySelector('.canvas-pane');
+    const paneRect = canvasPane.getBoundingClientRect();
+    
+    // Calculate the center of the canvas
+    const centerX = mindMapContainer.offsetWidth / 2;
+    const centerY = mindMapContainer.offsetHeight / 2;
+    
+    // Calculate the pan offset needed to center the view
+    panOffsetX = (paneRect.width / (2 * currentZoom)) - centerX;
+    panOffsetY = (paneRect.height / (2 * currentZoom)) - centerY;
+    
+    // Apply the transform
+    mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+    updateMinimap();
+  }
+
   // Initialize the application
   initializeStaticNodes();
   updateConnections();
+  centerView(); // Center the view after initialization
 
   // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
