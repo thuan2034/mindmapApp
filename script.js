@@ -536,7 +536,24 @@ document.addEventListener("DOMContentLoaded", () => {
           if (node) {
             node.name = newName;
             const nodeEl = document.getElementById(selectedNodeId);
-            if (nodeEl) nodeEl.textContent = newName;
+            if (nodeEl) {
+              // Preserve file type icon if it exists
+              if (node.fileData) {
+                let fileIcon = '';
+                if (node.fileData.type.startsWith('image/')) {
+                  fileIcon = '<i class="fas fa-image"></i> ';
+                } else if (node.fileData.type === 'application/pdf') {
+                  fileIcon = '<i class="fas fa-file-pdf"></i> ';
+                } else if (node.fileData.type.startsWith('video/')) {
+                  fileIcon = '<i class="fas fa-video"></i> ';
+                } else if (node.fileData.type.startsWith('audio/')) {
+                  fileIcon = '<i class="fas fa-music"></i> ';
+                }
+                nodeEl.innerHTML = fileIcon + escapeHTML(newName);
+              } else {
+                nodeEl.textContent = newName;
+              }
+            }
           }
         }
       };
