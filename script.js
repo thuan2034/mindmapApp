@@ -288,8 +288,9 @@ document.addEventListener("DOMContentLoaded", () => {
     nodeClickPrevented = false;
 
     const rect = activeDraggableNode.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+    // Calculate drag offset considering zoom and pan
+    dragOffsetX = (e.clientX - rect.left) / currentZoom;
+    dragOffsetY = (e.clientY - rect.top) / currentZoom;
 
     activeDraggableNode.classList.add("dragging");
     activeDraggableNode.style.zIndex = 1000;
@@ -309,8 +310,10 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
     const containerRect = mindMapContainer.getBoundingClientRect();
-    let newX = (e.clientX - containerRect.left - dragOffsetX) / currentZoom - panOffsetX;
-    let newY = (e.clientY - containerRect.top - dragOffsetY) / currentZoom - panOffsetY;
+    
+    // Calculate new position considering zoom and pan
+    let newX = (e.clientX - containerRect.left) / currentZoom - panOffsetX - dragOffsetX;
+    let newY = (e.clientY - containerRect.top) / currentZoom - panOffsetY - dragOffsetY;
 
     const nodeWidth = activeDraggableNode.offsetWidth;
     const nodeHeight = activeDraggableNode.offsetHeight;
@@ -774,16 +777,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const visibleWidth = canvasRect.width / currentZoom;
     const visibleHeight = canvasRect.height / currentZoom;
     
-    // Calculate the position indicator
+    // Calculate the scale factors for the minimap
+    const scaleX = minimapIndicator.offsetWidth / mindMapContainer.offsetWidth;
+    const scaleY = minimapIndicator.offsetHeight / mindMapContainer.offsetHeight;
+    
+    // Update viewport indicator
     const viewport = minimapIndicator.querySelector('.minimap-viewport');
     if (viewport) {
-      const scaleX = minimapIndicator.offsetWidth / mindMapContainer.offsetWidth;
-      const scaleY = minimapIndicator.offsetHeight / mindMapContainer.offsetHeight;
-      
       viewport.style.width = `${visibleWidth * scaleX}px`;
       viewport.style.height = `${visibleHeight * scaleY}px`;
       viewport.style.left = `${-panOffsetX * scaleX}px`;
       viewport.style.top = `${-panOffsetY * scaleY}px`;
     }
+
+    // Create or update node indicators
+    let nodeContainer = minimapIndicator.querySelector('.minimap-nodes');
+    if (!nodeContainer) {
+      nodeContainer = document.createElement('div');
+      nodeContainer.className = 'minimap-nodes';
+      nodeContainer.style.position = 'absolute';
+      nodeContainer.style.top = '0';
+      nodeContainer.style.left = '0';
+      nodeContainer.style.width = '100%';
+      nodeContainer.style.height = '100%';
+      nodeContainer.style.pointerEvents = 'none';
+      minimapIndicator.appendChild(nodeContainer);
+    }
+
+    // Clear existing node indicators
+    nodeContainer.innerHTML = '';
+
+    // Add indicators for each node
+    nodes.forEach(node => {
+      const nodeEl = document.getElementById(node.id);
+      if (nodeEl) {
+        const nodeIndicator = document.createElement('div');
+        nodeIndicator.className = 'minimap-node';
+        nodeIndicator.style.position = 'absolute';
+        nodeIndicator.style.width = `${Math.max(4, nodeEl.offsetWidth * scaleX)}px`;
+        nodeIndicator.style.height = `${Math.max(4, nodeEl.offsetHeight * scaleY)}px`;
+        nodeIndicator.style.left = `${node.x * scaleX}px`;
+        nodeIndicator.style.top = `${node.y * scaleY}px`;
+        nodeIndicator.style.backgroundColor = nodeEl.style.backgroundColor || '#FFFFE0';
+        nodeIndicator.style.borderRadius = '2px';
+        nodeIndicator.style.border = '1px solid rgba(0,0,0,0.2)';
+        nodeContainer.appendChild(nodeIndicator);
+      }
+    });
   }
 });
