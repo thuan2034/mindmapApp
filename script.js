@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!isResizing) return;
 
       const width = startWidth + (e.pageX - startX);
-      const minWidth = 300;
+      const minWidth = 0;
       const maxWidth = 800;
       
       if (width >= minWidth && width <= maxWidth) {
