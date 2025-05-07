@@ -894,8 +894,27 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetZoomBtn) {
     resetZoomBtn.addEventListener('click', () => {
       currentZoom = 1;
-      panOffsetX = 0;
-      panOffsetY = 0;
+      // Find the root node
+      const rootNode = nodes.find(n => n.id === "node-lap-trinh-web");
+      if (rootNode) {
+        const nodeElement = document.getElementById(rootNode.id);
+        if (nodeElement) {
+          const canvasPane = document.querySelector('.canvas-pane');
+          const paneRect = canvasPane.getBoundingClientRect();
+          
+          // Calculate the center position of the node
+          const nodeCenterX = rootNode.x + (nodeElement.offsetWidth / 2);
+          const nodeCenterY = rootNode.y + (nodeElement.offsetHeight / 2);
+          
+          // Calculate the pan offset needed to center the node in the viewport
+          panOffsetX = (paneRect.width / 2) - nodeCenterX;
+          panOffsetY = (paneRect.height / 2) - nodeCenterY;
+        }
+      } else {
+        // If no root node found, reset to default center
+        panOffsetX = 0;
+        panOffsetY = 0;
+      }
       updateZoom(1);
     });
   }

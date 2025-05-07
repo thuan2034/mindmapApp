@@ -383,7 +383,7 @@ body, html {
 }
 
 .save-btn {
-    background-color: #6fbf73; /* Green from image */
+    background-color: #d6336c; /* Green from image */
     color: white;
     border: none;
     padding: 10px 20px;
@@ -529,7 +529,7 @@ body, html {
 
 .add-node-btn-canvas {
     position: absolute;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     background-color: #d6336c;
     color: white;
@@ -543,6 +543,7 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1000;
 }
 .add-node-btn-canvas:hover {
     background-color: #b02758;
