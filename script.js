@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let panStartX, panStartY;
   let panOffsetX = 0;
   let panOffsetY = 0;
+  let pendingChanges = null; // Store pending changes before save
 
   // ===== Resizable Divider Functionality =====
   let isResizing = false;
@@ -423,19 +424,35 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (selectedNodeId) {
-        const nodeData = nodes.find((n) => n.id === selectedNodeId);
-        if (nodeData) {
-          nodeData.fileData = fileData;
-          // Keep original name and append file info
-          const originalName = nodeData.name || "New Node";
-          nodeData.name = originalName;
-          const nodeEl = document.getElementById(selectedNodeId);
-          if (nodeEl) {
-            nodeEl.dataset.fileData = JSON.stringify(fileData);
-            // Show original name with file icon
-            nodeEl.innerHTML = fileIcon + escapeHTML(originalName);
-          }
-          loadNodeInEditor(selectedNodeId);
+        // Store pending changes instead of applying immediately
+        pendingChanges = {
+          type: 'file',
+          fileData: fileData,
+          fileIcon: fileIcon
+        };
+
+        // Show preview in editor
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "block";
+        uploadFileToolbarButton.style.display = "none";
+        switchToTextButton.style.display = "inline-block";
+        
+        if (file.type.startsWith('image/')) {
+          fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
+        } else if (file.type === 'application/pdf') {
+          fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
+        } else if (file.type.startsWith('video/')) {
+          fileViewerArea.innerHTML = `
+            <video controls style="max-width: 100%; max-height: 100%;">
+              <source src="${fileUrl}" type="${file.type}">
+              Your browser does not support the video tag.
+            </video>`;
+        } else if (file.type.startsWith('audio/')) {
+          fileViewerArea.innerHTML = `
+            <audio controls style="width: 100%; margin: 20px 0;">
+              <source src="${fileUrl}" type="${file.type}">
+              Your browser does not support the audio tag.
+            </audio>`;
         }
       } else {
         // For new nodes, place in center of viewport
@@ -459,24 +476,98 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Node Title Editing
+  const editBtn = document.querySelector(".edit-btn");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      const titleElement = editorTitle;
+      titleElement.contentEditable = true;
+      titleElement.focus();
+    });
+  }
+
+  // Switch to Text Button
+  if (switchToTextButton) {
+    switchToTextButton.addEventListener("click", () => {
+      if (selectedNodeId) {
+        // Store pending change to switch to text mode
+        pendingChanges = {
+          type: 'switchToText'
+        };
+        
+        // Show text editor preview
+        nodeInputArea.style.display = "block";
+        fileViewerArea.style.display = "none";
+        uploadFileToolbarButton.style.display = "inline-block";
+        switchToTextButton.style.display = "none";
+        nodeInputArea.innerHTML = "";
+      }
+    });
+  }
+
   // Save Button
   if (saveBtn) {
     saveBtn.addEventListener("click", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
         if (nodeData) {
-          if (nodeData.fileData) {
-            return;
-          }
-          const currentHtmlContent = nodeInputArea.innerHTML;
-          const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
-          nodeData.contentHtml = currentHtmlContent;
-          nodeData.contentText = currentTextContent;
+          const newName = editorTitle.textContent.trim();
+          
+          if (pendingChanges) {
+            if (pendingChanges.type === 'file') {
+              // Apply pending file changes
+              nodeData.fileData = pendingChanges.fileData;
+              nodeData.name = newName; // Update name even with file
+              const nodeEl = document.getElementById(selectedNodeId);
+              if (nodeEl) {
+                nodeEl.dataset.fileData = JSON.stringify(pendingChanges.fileData);
+                nodeEl.innerHTML = pendingChanges.fileIcon + escapeHTML(newName);
+              }
+            } else if (pendingChanges.type === 'switchToText') {
+              // Apply switch to text changes
+              nodeData.fileData = null;
+              nodeData.name = newName; // Update name when switching to text
+              const nodeEl = document.getElementById(selectedNodeId);
+              if (nodeEl) {
+                nodeEl.removeAttribute('data-file-data');
+                nodeEl.innerHTML = escapeHTML(newName);
+              }
+            }
+            pendingChanges = null;
+          } else if (!nodeData.fileData) {
+            // Apply text content changes
+            const currentHtmlContent = nodeInputArea.innerHTML;
+            const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+            
+            // Update node data
+            nodeData.contentHtml = currentHtmlContent;
+            nodeData.contentText = currentTextContent;
+            nodeData.name = newName;
 
-          const nodeElement = document.getElementById(selectedNodeId);
-          if (nodeElement) {
-            nodeElement.dataset.contentHtml = currentHtmlContent;
-            nodeElement.dataset.contentText = currentTextContent;
+            // Update node display
+            const nodeElement = document.getElementById(selectedNodeId);
+            if (nodeElement) {
+              nodeElement.dataset.contentHtml = currentHtmlContent;
+              nodeElement.dataset.contentText = currentTextContent;
+              nodeElement.textContent = newName;
+            }
+          } else {
+            // Update only the name for nodes with files
+            nodeData.name = newName;
+            const nodeEl = document.getElementById(selectedNodeId);
+            if (nodeEl) {
+              let fileIcon = '';
+              if (nodeData.fileData.type.startsWith('image/')) {
+                fileIcon = '<i class="fas fa-image"></i> ';
+              } else if (nodeData.fileData.type === 'application/pdf') {
+                fileIcon = '<i class="fas fa-file-pdf"></i> ';
+              } else if (nodeData.fileData.type.startsWith('video/')) {
+                fileIcon = '<i class="fas fa-video"></i> ';
+              } else if (nodeData.fileData.type.startsWith('audio/')) {
+                fileIcon = '<i class="fas fa-music"></i> ';
+              }
+              nodeEl.innerHTML = fileIcon + escapeHTML(newName);
+            }
           }
         }
       } else {
@@ -517,54 +608,6 @@ document.addEventListener("DOMContentLoaded", () => {
     connectNodesButton.addEventListener("click", () => {
       isConnectionMode = true;
       connectionSourceNodeId = null;
-    });
-  }
-
-  // Node Title Editing
-  const editBtn = document.querySelector(".edit-btn");
-  if (editBtn) {
-    editBtn.addEventListener("click", () => {
-      const titleElement = editorTitle;
-      titleElement.contentEditable = true;
-      titleElement.focus();
-
-      const finishEditing = () => {
-        titleElement.contentEditable = false;
-        const newName = titleElement.textContent.trim();
-        if (selectedNodeId && newName) {
-          const node = nodes.find((n) => n.id === selectedNodeId);
-          if (node) {
-            node.name = newName;
-            const nodeEl = document.getElementById(selectedNodeId);
-            if (nodeEl) {
-              // Preserve file type icon if it exists
-              if (node.fileData) {
-                let fileIcon = '';
-                if (node.fileData.type.startsWith('image/')) {
-                  fileIcon = '<i class="fas fa-image"></i> ';
-                } else if (node.fileData.type === 'application/pdf') {
-                  fileIcon = '<i class="fas fa-file-pdf"></i> ';
-                } else if (node.fileData.type.startsWith('video/')) {
-                  fileIcon = '<i class="fas fa-video"></i> ';
-                } else if (node.fileData.type.startsWith('audio/')) {
-                  fileIcon = '<i class="fas fa-music"></i> ';
-                }
-                nodeEl.innerHTML = fileIcon + escapeHTML(newName);
-              } else {
-                nodeEl.textContent = newName;
-              }
-            }
-          }
-        }
-      };
-
-      titleElement.addEventListener("blur", finishEditing);
-      titleElement.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          finishEditing();
-        }
-      });
     });
   }
 
@@ -891,29 +934,6 @@ document.addEventListener("DOMContentLoaded", () => {
         nodeIndicator.style.borderRadius = '2px';
         nodeIndicator.style.border = '1px solid rgba(0,0,0,0.2)';
         nodeContainer.appendChild(nodeIndicator);
-      }
-    });
-  }
-
-  // Add event listener for switching to text content
-  if (switchToTextButton) {
-    switchToTextButton.addEventListener("click", () => {
-      if (selectedNodeId) {
-        const nodeData = nodes.find((n) => n.id === selectedNodeId);
-        if (nodeData) {
-          // Clear file data
-          nodeData.fileData = null;
-          
-          // Update node display
-          const nodeEl = document.getElementById(selectedNodeId);
-          if (nodeEl) {
-            nodeEl.removeAttribute('data-file-data');
-            nodeEl.innerHTML = escapeHTML(nodeData.name);
-          }
-          
-          // Switch to text editor
-          loadNodeInEditor(selectedNodeId);
-        }
       }
     });
   }
