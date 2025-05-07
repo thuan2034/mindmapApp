@@ -657,3 +657,41 @@ body, html {
 .connection-source {
     border: 2px solid #2196F3 !important;
 }
+
+.search-navigation {
+    display: none;
+    align-items: center;
+    margin-left: 10px;
+    gap: 5px;
+}
+
+.search-navigation.active {
+    display: flex;
+}
+
+.search-navigation button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-navigation button:hover {
+    background-color: #e0e0e0;
+}
+
+.search-navigation button:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.search-navigation .result-count {
+    font-size: 12px;
+    color: #666;
+    margin: 0 5px;
+}

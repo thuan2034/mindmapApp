@@ -623,6 +623,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Search Functionality =====
+  let currentSearchResults = [];
+  let currentSearchIndex = -1;
+
   function searchNodes(query) {
     // Remove previous search highlights
     document.querySelectorAll('.node.search-highlight').forEach(node => {
@@ -630,27 +633,83 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (!query.trim()) {
+      currentSearchResults = [];
+      currentSearchIndex = -1;
+      document.querySelector('.search-navigation').classList.remove('active');
       return;
     }
 
-    const searchResults = nodes.filter(node => 
+    currentSearchResults = nodes.filter(node => 
       node.name.toLowerCase().includes(query.toLowerCase())
     );
 
     // Highlight matching nodes
-    searchResults.forEach(node => {
+    currentSearchResults.forEach(node => {
       const nodeElement = document.getElementById(node.id);
       if (nodeElement) {
         nodeElement.classList.add('search-highlight');
       }
     });
 
-    // If there's exactly one match, select it
-    if (searchResults.length === 1) {
-      selectNode(searchResults[0].id);
+    // Update navigation controls
+    const searchNav = document.querySelector('.search-navigation');
+    const resultCount = searchNav.querySelector('.result-count');
+    const prevBtn = document.getElementById('prevResultBtn');
+    const nextBtn = document.getElementById('nextResultBtn');
+
+    if (currentSearchResults.length > 0) {
+      searchNav.classList.add('active');
+      currentSearchIndex = 0;
+      resultCount.textContent = `1/${currentSearchResults.length}`;
+      prevBtn.disabled = true;
+      nextBtn.disabled = currentSearchResults.length === 1;
+      centerOnNode(currentSearchResults[0]);
+    } else {
+      searchNav.classList.remove('active');
+      currentSearchIndex = -1;
     }
 
-    return searchResults;
+    return currentSearchResults;
+  }
+
+  function centerOnNode(node) {
+    const nodeElement = document.getElementById(node.id);
+    if (nodeElement) {
+      selectNode(node.id);
+      
+      const canvasPane = document.querySelector('.canvas-pane');
+      const paneRect = canvasPane.getBoundingClientRect();
+      
+      // Calculate the center position of the node
+      const nodeCenterX = node.x + (nodeElement.offsetWidth / 2);
+      const nodeCenterY = node.y + (nodeElement.offsetHeight / 2);
+      
+      // Calculate the pan offset needed to center the node in the viewport
+      panOffsetX = (paneRect.width / (2 * currentZoom)) - nodeCenterX;
+      panOffsetY = (paneRect.height / (2 * currentZoom)) - nodeCenterY;
+      
+      // Apply the transform
+      mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+      updateMinimap();
+    }
+  }
+
+  function navigateSearchResults(direction) {
+    if (currentSearchResults.length === 0) return;
+
+    const prevBtn = document.getElementById('prevResultBtn');
+    const nextBtn = document.getElementById('nextResultBtn');
+    const resultCount = document.querySelector('.result-count');
+
+    currentSearchIndex = (currentSearchIndex + direction + currentSearchResults.length) % currentSearchResults.length;
+    resultCount.textContent = `${currentSearchIndex + 1}/${currentSearchResults.length}`;
+    
+    // Update button states
+    prevBtn.disabled = currentSearchIndex === 0;
+    nextBtn.disabled = currentSearchIndex === currentSearchResults.length - 1;
+
+    // Center on the selected node
+    centerOnNode(currentSearchResults[currentSearchIndex]);
   }
 
   // Search Input
@@ -660,23 +719,8 @@ document.addEventListener("DOMContentLoaded", () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         const query = e.target.value.trim();
-        const results = searchNodes(query);
-        
-        // Update search results count if needed
-        const searchContainer = searchInput.closest('.search-container');
-        let resultsCount = searchContainer.querySelector('.search-results-count');
-        
-        if (query && results) {
-          if (!resultsCount) {
-            resultsCount = document.createElement('span');
-            resultsCount.className = 'search-results-count';
-            searchContainer.appendChild(resultsCount);
-          }
-          resultsCount.textContent = `${results.length} result${results.length !== 1 ? 's' : ''}`;
-        } else if (resultsCount) {
-          resultsCount.remove();
-        }
-      }, 300); // Debounce search for better performance
+        searchNodes(query);
+      }, 300);
     });
 
     // Clear search on escape
@@ -686,13 +730,37 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll('.node.search-highlight').forEach(node => {
           node.classList.remove('search-highlight');
         });
-        const resultsCount = searchInput.closest('.search-container').querySelector('.search-results-count');
-        if (resultsCount) {
-          resultsCount.remove();
-        }
+        document.querySelector('.search-navigation').classList.remove('active');
+        currentSearchResults = [];
+        currentSearchIndex = -1;
       }
     });
   }
+
+  // Search Navigation Buttons
+  const prevResultBtn = document.getElementById('prevResultBtn');
+  const nextResultBtn = document.getElementById('nextResultBtn');
+
+  if (prevResultBtn) {
+    prevResultBtn.addEventListener('click', () => navigateSearchResults(-1));
+  }
+
+  if (nextResultBtn) {
+    nextResultBtn.addEventListener('click', () => navigateSearchResults(1));
+  }
+
+  // Keyboard navigation for search results
+  document.addEventListener('keydown', (e) => {
+    if (currentSearchResults.length > 0) {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateSearchResults(-1);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateSearchResults(1);
+      }
+    }
+  });
 
   // ===== Initialization =====
   function initializeStaticNodes() {
