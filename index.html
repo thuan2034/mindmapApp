@@ -68,6 +68,7 @@
                     </div>
                     <button class="save-btn">Lưu</button>
                 </section>
+                <div class="resizable-divider"></div>
                 <section class="canvas-pane">
                     <div class="mind-map-container" id="mindMapContainer">
                         <div class="node" id="node-lap-trinh-web"
@@ -80,6 +81,14 @@
                             node</div>
                         <div class="node" id="node-uiux" style="top: 300px; left: 550px; background-color: #FFFFE0;">
                             UI/UX</div>
+                    </div>
+                    <div class="zoom-controls">
+                        <button id="zoomInBtn" title="Zoom In"><i class="fas fa-plus"></i></button>
+                        <button id="zoomOutBtn" title="Zoom Out"><i class="fas fa-minus"></i></button>
+                        <button id="resetZoomBtn" title="Reset Zoom"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div class="minimap-indicator">
+                        <div class="minimap-viewport"></div>
                     </div>
                     <button id="addNodeButton" class="add-node-btn-canvas" title="Add new node to canvas">+</button>
                 </section>

@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const connectNodesButton = document.getElementById("connectNodesButton");
   const deleteNodeBtn = document.getElementById("deleteNodeBtn");
   const searchInput = document.querySelector(".search-container input");
+  const zoomInBtn = document.getElementById("zoomInBtn");
+  const zoomOutBtn = document.getElementById("zoomOutBtn");
+  const resetZoomBtn = document.getElementById("resetZoomBtn");
+  const minimapIndicator = document.querySelector(".minimap-indicator");
+  const resizableDivider = document.querySelector(".resizable-divider");
+  const editorPane = document.querySelector(".editor-pane");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -24,6 +30,61 @@ document.addEventListener("DOMContentLoaded", () => {
   let dragOffsetX, dragOffsetY;
   let nodeClickPrevented = false;
   let svgLinesContainer = null;
+  let currentZoom = 1;
+  let isPanning = false;
+  let panStartX, panStartY;
+  let panOffsetX = 0;
+  let panOffsetY = 0;
+
+  // ===== Resizable Divider Functionality =====
+  let isResizing = false;
+  let startX;
+  let startWidth;
+
+  function initResizableDivider() {
+    const resizableDivider = document.querySelector(".resizable-divider");
+    const editorPane = document.querySelector(".editor-pane");
+    
+    if (!resizableDivider || !editorPane) return;
+
+    resizableDivider.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.pageX;
+      startWidth = editorPane.offsetWidth;
+      resizableDivider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      const width = startWidth + (e.pageX - startX);
+      const minWidth = 300;
+      const maxWidth = 800;
+      
+      if (width >= minWidth && width <= maxWidth) {
+        editorPane.style.width = `${width}px`;
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        resizableDivider.classList.remove('dragging');
+        document.body.style.cursor = '';
+      }
+    });
+
+    // Prevent text selection while resizing
+    resizableDivider.addEventListener('selectstart', (e) => {
+      e.preventDefault();
+    });
+  }
+
+  // Initialize resizable divider
+  initResizableDivider();
 
   // ===== Utility Functions =====
   function escapeHTML(str) {
@@ -236,13 +297,15 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
     const containerRect = mindMapContainer.getBoundingClientRect();
-    let newX = e.clientX - containerRect.left - dragOffsetX + mindMapContainer.scrollLeft;
-    let newY = e.clientY - containerRect.top - dragOffsetY + mindMapContainer.scrollTop;
+    let newX = (e.clientX - containerRect.left - dragOffsetX) / currentZoom - panOffsetX;
+    let newY = (e.clientY - containerRect.top - dragOffsetY) / currentZoom - panOffsetY;
 
     const nodeWidth = activeDraggableNode.offsetWidth;
     const nodeHeight = activeDraggableNode.offsetHeight;
-    newX = Math.max(0, Math.min(newX, mindMapContainer.scrollWidth - nodeWidth));
-    newY = Math.max(0, Math.min(newY, mindMapContainer.scrollHeight - nodeHeight));
+    
+    // Allow nodes to be dragged anywhere within the large canvas
+    newX = Math.max(0, Math.min(newX, mindMapContainer.offsetWidth - nodeWidth));
+    newY = Math.max(0, Math.min(newY, mindMapContainer.offsetHeight - nodeHeight));
 
     activeDraggableNode.style.left = newX + "px";
     activeDraggableNode.style.top = newY + "px";
@@ -580,5 +643,97 @@ document.addEventListener("DOMContentLoaded", () => {
         nodeInputArea.classList.add("is-placeholder");
       }
     });
+  }
+
+  // Zoom Controls
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener('click', () => {
+      updateZoom(currentZoom + 0.1);
+    });
+  }
+
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener('click', () => {
+      updateZoom(currentZoom - 0.1);
+    });
+  }
+
+  if (resetZoomBtn) {
+    resetZoomBtn.addEventListener('click', () => {
+      currentZoom = 1;
+      panOffsetX = 0;
+      panOffsetY = 0;
+      updateZoom(1);
+    });
+  }
+
+  // Pan functionality
+  mindMapContainer.addEventListener('mousedown', (e) => {
+    // Only start panning if we're not clicking on a node and not in connection mode
+    if (!e.target.closest('.node') && !isConnectionMode) {
+      e.preventDefault();
+      isPanning = true;
+      panStartX = e.clientX - panOffsetX;
+      panStartY = e.clientY - panOffsetY;
+      mindMapContainer.style.cursor = 'grabbing';
+    }
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isPanning) {
+      panOffsetX = e.clientX - panStartX;
+      panOffsetY = e.clientY - panStartY;
+      mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+      updateMinimap();
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isPanning) {
+      isPanning = false;
+      mindMapContainer.style.cursor = 'grab';
+    }
+  });
+
+  // Mouse wheel zoom
+  mindMapContainer.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      updateZoom(currentZoom + delta);
+    }
+  });
+
+  // Initialize minimap
+  updateMinimap();
+
+  // ===== Zoom and Pan Functions =====
+  function updateZoom(zoom) {
+    currentZoom = Math.max(0.1, Math.min(2, zoom));
+    mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+    updateMinimap();
+  }
+
+  function updateMinimap() {
+    if (!minimapIndicator) return;
+
+    const containerRect = mindMapContainer.getBoundingClientRect();
+    const canvasRect = document.querySelector('.canvas-pane').getBoundingClientRect();
+    
+    // Calculate the visible portion of the mind map
+    const visibleWidth = canvasRect.width / currentZoom;
+    const visibleHeight = canvasRect.height / currentZoom;
+    
+    // Calculate the position indicator
+    const viewport = minimapIndicator.querySelector('.minimap-viewport');
+    if (viewport) {
+      const scaleX = minimapIndicator.offsetWidth / mindMapContainer.offsetWidth;
+      const scaleY = minimapIndicator.offsetHeight / mindMapContainer.offsetHeight;
+      
+      viewport.style.width = `${visibleWidth * scaleX}px`;
+      viewport.style.height = `${visibleHeight * scaleY}px`;
+      viewport.style.left = `${-panOffsetX * scaleX}px`;
+      viewport.style.top = `${-panOffsetY * scaleY}px`;
+    }
   }
 });

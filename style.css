@@ -197,23 +197,26 @@ body, html {
 .content-area {
     display: flex;
     flex-grow: 1;
-    background-color: #f9f9f9; /* Slightly different bg for content panes */
+    background-color: #f9f9f9;
     padding: 15px;
-    gap: 15px; /* Space between panes */
-    overflow: hidden; /* Important for canvas scrolling if content overflows */
+    gap: 0;
+    overflow: hidden;
+    position: relative;
 }
 
 /* Editor Pane */
 .editor-pane {
-    width: 40%; /* Adjust width as needed */
-    max-width: 450px; /* Max width for editor */
+    width: 45%;
+    min-width: 300px;
+    max-width: 800px;
     background-color: #ffffff;
-    border-radius: 8px;
+    border-radius: 8px 0 0 8px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    overflow-y: auto; /* Scroll if content is too long */
+    overflow-y: auto;
+    flex-shrink: 0;
 }
 
 .editor-header {
@@ -297,13 +300,13 @@ body, html {
 
 #node-input-area {
     width: 100%;
-    height: 200px; /* Adjust as needed */
+    height: 300px; /* Increased from 200px */
     border: 1px solid #ddd;
     padding: 10px;
     border-radius: 5px;
     font-size: 1em;
     line-height: 1.6;
-    resize: vertical; /* Allow vertical resizing */
+    resize: vertical;
     overflow-y: auto;
     background-color: white;
 }
@@ -320,7 +323,7 @@ body, html {
 
 #file-viewer-area {
     width: 100%;
-    height: 400px;
+    height: 500px; /* Increased from 400px */
     border: 1px solid #ddd;
     border-radius: 5px;
     background-color: white;
@@ -361,16 +364,80 @@ body, html {
 .canvas-pane {
     flex-grow: 1;
     background-color: #ffffff;
-    border-radius: 8px;
-    position: relative; /* For positioning nodes absolutely */
-    overflow: auto; /* Allows scrolling if mind map is large */
+    border-radius: 0 8px 8px 0;
+    position: relative;
+    overflow: hidden;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    cursor: grab;
+    min-width: 0; /* Allow canvas to shrink below its content size */
+}
+
+.canvas-pane:active {
+    cursor: grabbing; /* Show grabbing cursor while dragging */
 }
 
 .mind-map-container {
-    width: 100%;
-    height: 100%;
-    position: relative; /* To position nodes within this container */
+    width: 3000px;
+    height: 2000px;
+    position: relative;
+    background-color: #ffffff;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform-origin: 0 0;
+    user-select: none; /* Prevent text selection while dragging */
+}
+
+/* Add a minimap indicator */
+.minimap-indicator {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 150px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.minimap-viewport {
+    position: absolute;
+    background-color: rgba(33, 150, 243, 0.2);
+    border: 1px solid rgba(33, 150, 243, 0.5);
+    pointer-events: none;
+}
+
+/* Add zoom controls */
+.zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    gap: 5px;
+    z-index: 1000;
+}
+
+.zoom-controls button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 4px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #666;
+}
+
+.zoom-controls button:hover {
+    background-color: #f0f0f0;
 }
 
 .node {
@@ -426,19 +493,54 @@ body, html {
     pointer-events: none; /* Lines should not interfere with node interaction */
 }
 
+/* Resizable Divider */
+.resizable-divider {
+    width: 8px;
+    background-color: #e0e0e0;
+    cursor: col-resize;
+    position: relative;
+    transition: background-color 0.2s;
+    z-index: 1000;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.resizable-divider:hover,
+.resizable-divider.dragging {
+    background-color: #d6336c;
+}
+
+.resizable-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 30px;
+    background-color: #ccc;
+}
+
 /* Responsive adjustments (very basic example) */
+@media (max-width: 1200px) {
+    .editor-pane {
+        width: 40%;
+        max-width: 500px;
+    }
+}
+
 @media (max-width: 900px) {
     .editor-pane {
-        width: 100%; /* Stack editor and canvas on smaller screens */
+        width: 100%;
         max-width: none;
         margin-bottom: 15px;
-        height: 50vh; /* Give editor a portion of height */
+        height: 50vh;
     }
     .content-area {
         flex-direction: column;
     }
     .canvas-pane {
-        height: calc(50vh - 75px); /* Adjust based on padding and gap */
+        height: calc(50vh - 75px);
         min-height: 300px;
     }
 }
