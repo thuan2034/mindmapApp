@@ -199,13 +199,37 @@ body, html {
     color: #333;
 }
 
+.editor-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .editor-header .back-btn,
-.editor-header .edit-btn {
+.editor-header .edit-btn,
+.editor-header .delete-btn {
     background: none;
     border: none;
     cursor: pointer;
     font-size: 16px;
     color: #777;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.editor-header .back-btn:hover,
+.editor-header .edit-btn:hover {
+    background-color: #f0f0f0;
+    color: #555;
+}
+
+.editor-header .delete-btn {
+    color: #dc3545;
+}
+
+.editor-header .delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
 }
 
 .editor-toolbar {
@@ -237,6 +261,7 @@ body, html {
 .editor-content {
     flex-grow: 1; /* Take remaining space */
     margin-bottom: 15px;
+    position: relative; /* For positioning file viewer */
 }
 
 #node-input-area {
@@ -262,6 +287,28 @@ body, html {
     pointer-events: none; /* Make placeholder non-interactive */
 }
 
+#file-viewer-area {
+    width: 100%;
+    height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: white;
+    overflow: auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#file-viewer-area img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+#file-viewer-area embed {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
 
 .save-btn {
     background-color: #6fbf73; /* Green from image */

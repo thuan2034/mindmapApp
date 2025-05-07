@@ -1,41 +1,52 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // ===== DOM Elements =====
   const mindMapContainer = document.getElementById("mindMapContainer");
   const nodeInputArea = document.getElementById("node-input-area");
+  const fileViewerArea = document.getElementById("file-viewer-area");
   const saveBtn = document.querySelector(".save-btn");
   const editorTitle = document.querySelector(".editor-pane h2");
   const addNodeButton = document.getElementById("addNodeButton");
   const editorToolbar = document.querySelector(".editor-toolbar");
+  const nodeFileInput = document.getElementById("nodeFileInput");
+  const uploadFileToolbarButton = document.getElementById("uploadFileToolbarButton");
+  const connectNodesButton = document.getElementById("connectNodesButton");
+  const deleteNodeBtn = document.getElementById("deleteNodeBtn");
+
+  // ===== State Variables =====
   let isConnectionMode = false;
   let connectionSourceNodeId = null;
-  let nodes = []; // To store node data (name, contentHtml, contentText, position, id, color)
+  let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData)
   let selectedNodeId = null;
-  let nodeIdCounter = 0; // For generating unique IDs
-
+  let nodeIdCounter = 0;
   let isDragging = false;
   let activeDraggableNode = null;
   let dragOffsetX, dragOffsetY;
+  let nodeClickPrevented = false;
+  let svgLinesContainer = null;
 
-  // --- RICH TEXT EDITOR (Simplified) ---
-  if (editorToolbar) {
-    editorToolbar.addEventListener("click", (e) => {
-      const button = e.target.closest("button");
-      if (button && button.dataset.command) {
-        const command = button.dataset.command;
-        const value = button.dataset.value || null;
-        document.execCommand(command, false, value);
-        nodeInputArea.focus(); // Keep focus in the editor
-      }
-    });
-  }
-
-  // Function to escape HTML to prevent XSS when setting innerHTML from user input
+  // ===== Utility Functions =====
   function escapeHTML(str) {
     const div = document.createElement("div");
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;
   }
 
-  // Function to create a new node element
+  function ensureSvgContainer() {
+    if (!svgLinesContainer) {
+      svgLinesContainer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svgLinesContainer.style.position = "absolute";
+      svgLinesContainer.style.top = "0";
+      svgLinesContainer.style.left = "0";
+      svgLinesContainer.style.width = "100%";
+      svgLinesContainer.style.height = "100%";
+      svgLinesContainer.style.pointerEvents = "none";
+      mindMapContainer.insertBefore(svgLinesContainer, mindMapContainer.firstChild);
+    }
+    svgLinesContainer.setAttribute("width", mindMapContainer.scrollWidth);
+    svgLinesContainer.setAttribute("height", mindMapContainer.scrollHeight);
+  }
+
+  // ===== Node Management Functions =====
   function createNodeElement(nodeData) {
     const nodeDiv = document.createElement("div");
     nodeDiv.classList.add("node");
@@ -45,31 +56,24 @@ document.addEventListener("DOMContentLoaded", () => {
     if (nodeData.color) {
       nodeDiv.style.backgroundColor = nodeData.color;
     }
-    // Display the node name only
+    
     const displayText = nodeData.name || "Node";
     nodeDiv.innerHTML = escapeHTML(displayText);
-    // Store content for editor
     nodeDiv.dataset.contentHtml = nodeData.contentHtml;
     nodeDiv.dataset.contentText = nodeData.contentText;
+    if (nodeData.fileData) {
+      nodeDiv.dataset.fileData = JSON.stringify(nodeData.fileData);
+    }
 
     nodeDiv.addEventListener("mousedown", onNodeMouseDown);
-    // Click handled in mouseup
     return nodeDiv;
   }
 
-  // Function to add a new node to the canvas and data structure
-  function addNode(
-    name = "New Node",
-    x = 50,
-    y = 50,
-    color = "#FFFFE0",
-    contentHtml = ""
-  ) {
+  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null) {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
-    const contentText =
-      new DOMParser().parseFromString(defaultHtml, "text/html").body
-        .textContent || "";
+    const contentText = new DOMParser().parseFromString(defaultHtml, "text/html").body.textContent || "";
+    
     const newNodeData = {
       id: `node-generated-${nodeIdCounter}`,
       name: name,
@@ -79,7 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
       y: y,
       color: color,
       connections: [],
+      fileData: fileData
     };
+    
     nodes.push(newNodeData);
     const nodeElement = createNodeElement(newNodeData);
     mindMapContainer.appendChild(nodeElement);
@@ -87,317 +93,80 @@ document.addEventListener("DOMContentLoaded", () => {
     return newNodeData;
   }
 
-  // Function to load node content into the editor
-  function loadNodeInEditor(nodeId) {
-    const nodeData = nodes.find((n) => n.id === nodeId);
-    if (nodeData) {
-      selectedNodeId = nodeId;
-      // Show node name in title
-      editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
-      // Load the content into the editor
-      nodeInputArea.innerHTML = nodeData.contentHtml;
-      updateNodeSelectionVisual();
-    }
-  }
-
   function selectNode(nodeId) {
     if (nodeId === selectedNodeId && nodeInputArea.innerHTML !== "") return;
     loadNodeInEditor(nodeId);
   }
 
+  function loadNodeInEditor(nodeId) {
+    const nodeData = nodes.find((n) => n.id === nodeId);
+    if (nodeData) {
+      selectedNodeId = nodeId;
+      editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
+      
+      if (nodeData.fileData) {
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "block";
+        
+        if (nodeData.fileData.type.startsWith('image/')) {
+          fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
+        } else if (nodeData.fileData.type === 'application/pdf') {
+          fileViewerArea.innerHTML = `<embed src="${nodeData.fileData.url}" type="application/pdf" width="100%" height="100%">`;
+        }
+      } else {
+        nodeInputArea.style.display = "block";
+        fileViewerArea.style.display = "none";
+        nodeInputArea.innerHTML = nodeData.contentHtml;
+      }
+      
+      updateNodeSelectionVisual();
+    }
+  }
+
   function updateNodeSelectionVisual() {
-    document
-      .querySelectorAll(".node")
-      .forEach((n) => n.classList.remove("selected-canvas"));
+    document.querySelectorAll(".node").forEach((n) => n.classList.remove("selected-canvas"));
     if (selectedNodeId) {
       const nodeEl = document.getElementById(selectedNodeId);
       if (nodeEl) nodeEl.classList.add("selected-canvas");
     }
   }
-  // Handle edit button click to enable title editing
-  const editBtn = document.querySelector(".edit-btn");
-  if (editBtn) {
-    editBtn.addEventListener("click", () => {
-      const titleElement = editorTitle;
-      titleElement.contentEditable = true;
-      titleElement.focus();
 
-      const finishEditing = () => {
-        titleElement.contentEditable = false;
-        const newName = titleElement.textContent.trim();
-        if (selectedNodeId && newName) {
-          const node = nodes.find((n) => n.id === selectedNodeId);
-          if (node) {
-            node.name = newName;
-            const nodeEl = document.getElementById(selectedNodeId);
-            if (nodeEl) nodeEl.textContent = newName;
-          }
-        }
-      };
+  function deleteNode(nodeId) {
+    // Remove the node from the DOM
+    const nodeElement = document.getElementById(nodeId);
+    if (nodeElement) {
+      nodeElement.remove();
+    }
 
-      titleElement.addEventListener("blur", finishEditing);
-      titleElement.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          finishEditing();
+    // Remove the node from the nodes array
+    const nodeIndex = nodes.findIndex(n => n.id === nodeId);
+    if (nodeIndex !== -1) {
+      // Remove all connections to this node from other nodes
+      nodes.forEach(node => {
+        if (node.connections) {
+          node.connections = node.connections.filter(connId => connId !== nodeId);
         }
       });
-    });
-  }
-  // Handle Connect Nodes button
-  const connectNodesButton = document.getElementById("connectNodesButton");
-  if (connectNodesButton) {
-    connectNodesButton.addEventListener("click", () => {
-      isConnectionMode = true;
-      connectionSourceNodeId = null;
-    });
-  }
-
-  // Modified node mouseup handler to handle connections
-  function onNodeMouseUp(e) {
-    if (activeDraggableNode) {
-      if (!isDragging) {
-        if (isConnectionMode) {
-          if (!connectionSourceNodeId) {
-            connectionSourceNodeId = activeDraggableNode.id;
-            activeDraggableNode.classList.add("connection-source");
-          } else {
-            const targetNodeId = activeDraggableNode.id;
-            const sourceNode = nodes.find(
-              (n) => n.id === connectionSourceNodeId
-            );
-
-            if (sourceNode && sourceNode.id !== targetNodeId) {
-              if (!sourceNode.connections.includes(targetNodeId)) {
-                sourceNode.connections.push(targetNodeId);
-                updateConnections();
-              }
-            }
-
-            // Reset connection mode
-            document
-              .querySelectorAll(".node.connection-source")
-              .forEach((n) => n.classList.remove("connection-source"));
-            isConnectionMode = false;
-            connectionSourceNodeId = null;
-          }
-        } else {
-          selectNode(activeDraggableNode.id);
-        }
-      }
-      activeDraggableNode.classList.remove("dragging");
-      activeDraggableNode.style.zIndex = "";
+      
+      // Remove the node
+      nodes.splice(nodeIndex, 1);
     }
 
-    isDragging = false;
-    activeDraggableNode = null;
-    document.removeEventListener("mousemove", onNodeMouseMove);
-    document.removeEventListener("mouseup", onNodeMouseUp);
-  }
-  // Save button functionality
-  if (saveBtn) {
-    saveBtn.addEventListener("click", () => {
-      const currentHtmlContent = nodeInputArea.innerHTML;
-      const currentTextContent =
-        nodeInputArea.textContent || nodeInputArea.innerText;
-
-      if (selectedNodeId) {
-        const nodeData = nodes.find((n) => n.id === selectedNodeId);
-        if (nodeData) {
-          // Update only the content, not the name
-          nodeData.contentHtml = currentHtmlContent;
-          nodeData.contentText = currentTextContent;
-
-          const nodeElement = document.getElementById(selectedNodeId);
-          if (nodeElement) {
-            nodeElement.dataset.contentHtml = currentHtmlContent;
-            nodeElement.dataset.contentText = currentTextContent;
-          }
-          console.log("Node content saved:", nodeData);
-        }
-      } else {
-        // Create new node from editor if none selected
-        if (currentTextContent.trim() || currentHtmlContent.trim()) {
-          addNode("New Node", 70, 70, "#FFFFE0", currentHtmlContent);
-        }
-      }
-    });
-  }
-
-  // Add node button on canvas
-  if (addNodeButton) {
-    addNodeButton.addEventListener("click", () => {
-      const canvasRect = mindMapContainer.getBoundingClientRect();
-      const newNode = addNode(
-        "New Canvas Node",
-        Math.random() * (canvasRect.width - 100),
-        Math.random() * (canvasRect.height - 50),
-        "#FFFFE0",
-        ""
-      );
-      nodeInputArea.focus();
-    });
-  }
-
-  // --- DRAGGING FUNCTIONALITY ---
-  let nodeClickPrevented = false;
-
-  function onNodeMouseDown(e) {
-    if (e.button !== 0) return;
-
-    activeDraggableNode = e.target.closest(".node");
-    if (!activeDraggableNode) return;
-
-    isDragging = false;
-    nodeClickPrevented = false;
-
-    const rect = activeDraggableNode.getBoundingClientRect();
-    const containerRect = mindMapContainer.getBoundingClientRect();
-
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
-
-    activeDraggableNode.classList.add("dragging");
-    activeDraggableNode.style.zIndex = 1000;
-
-    document.addEventListener("mousemove", onNodeMouseMove);
-    document.addEventListener("mouseup", onNodeMouseUp);
-  }
-
-  function onNodeMouseMove(e) {
-    if (!activeDraggableNode) return;
-
-    if (!isDragging) {
-      isDragging = true;
-      nodeClickPrevented = true;
+    // If the deleted node was selected, clear the editor
+    if (selectedNodeId === nodeId) {
+      selectedNodeId = null;
+      editorTitle.textContent = "New node";
+      nodeInputArea.innerHTML = "";
+      nodeInputArea.style.display = "block";
+      fileViewerArea.style.display = "none";
+      updateNodeSelectionVisual();
     }
 
-    e.preventDefault();
-
-    const containerRect = mindMapContainer.getBoundingClientRect();
-    let newX =
-      e.clientX -
-      containerRect.left -
-      dragOffsetX +
-      mindMapContainer.scrollLeft;
-    let newY =
-      e.clientY - containerRect.top - dragOffsetY + mindMapContainer.scrollTop;
-
-    const nodeWidth = activeDraggableNode.offsetWidth;
-    const nodeHeight = activeDraggableNode.offsetHeight;
-    newX = Math.max(
-      0,
-      Math.min(newX, mindMapContainer.scrollWidth - nodeWidth)
-    );
-    newY = Math.max(
-      0,
-      Math.min(newY, mindMapContainer.scrollHeight - nodeHeight)
-    );
-
-    activeDraggableNode.style.left = newX + "px";
-    activeDraggableNode.style.top = newY + "px";
-
-    const nodeData = nodes.find((n) => n.id === activeDraggableNode.id);
-    if (nodeData) {
-      nodeData.x = newX;
-      nodeData.y = newY;
-    }
+    // Update connections display
     updateConnections();
   }
 
-  function onNodeDragEnd(e) {
-    if (activeDraggableNode) {
-      if (!isDragging) {
-        selectNode(activeDraggableNode.id);
-      }
-      activeDraggableNode.classList.remove("dragging");
-      activeDraggableNode.style.zIndex = "";
-    }
-
-    isDragging = false;
-    activeDraggableNode = null;
-    document.removeEventListener("mousemove", onNodeMouseMove);
-    document.removeEventListener("mouseup", onNodeDragEnd);
-  }
-
-  // --- INITIALIZE STATIC NODES (from HTML) ---
-  function initializeStaticNodes() {
-    const staticNodeElements = mindMapContainer.querySelectorAll(
-      '.node:not([id^="node-generated-"])'
-    );
-    let maxIdNum = 0;
-
-    staticNodeElements.forEach((nodeEl) => {
-      if (nodes.find((n) => n.id === nodeEl.id)) return;
-
-      const idParts = nodeEl.id.split("-");
-      const numPart = parseInt(idParts[idParts.length - 1], 10);
-      if (!isNaN(numPart)) maxIdNum = Math.max(maxIdNum, numPart);
-
-      const nameText = nodeEl.textContent.trim();
-      const initialColor = nodeEl.style.backgroundColor || "#FFFFE0";
-      const newNodeData = {
-        id: nodeEl.id,
-        name: nameText,
-        contentHtml: escapeHTML(nameText),
-        contentText: nameText,
-        x: parseInt(nodeEl.style.left || "50", 10),
-        y: parseInt(nodeEl.style.top || "50", 10),
-        color: initialColor,
-        connections: [],
-      };
-      nodes.push(newNodeData);
-      nodeEl.dataset.contentHtml = newNodeData.contentHtml;
-      nodeEl.dataset.contentText = newNodeData.contentText;
-      nodeEl.addEventListener("mousedown", onNodeMouseDown);
-    });
-
-    nodeIdCounter = Math.max(nodeIdCounter, maxIdNum);
-
-    // Example: define connections
-    const lapTrinhWebNode = nodes.find((n) => n.id === "node-lap-trinh-web");
-    if (lapTrinhWebNode) {
-      lapTrinhWebNode.connections = [
-        "node-oop",
-        "node-csdl",
-        "node-new",
-        "node-uiux",
-      ];
-    }
-
-    if (nodes.length === 0) {
-      editorTitle.textContent = "New node";
-      nodeInputArea.innerHTML = "";
-      nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
-      selectedNodeId = null;
-    }
-    updateNodeSelectionVisual();
-  }
-
-  // --- CONNECTOR LINES (SVG Implementation) ---
-  let svgLinesContainer = null;
-
-  function ensureSvgContainer() {
-    if (!svgLinesContainer) {
-      svgLinesContainer = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "svg"
-      );
-      svgLinesContainer.style.position = "absolute";
-      svgLinesContainer.style.top = "0";
-      svgLinesContainer.style.left = "0";
-      svgLinesContainer.style.width = "100%";
-      svgLinesContainer.style.height = "100%";
-      svgLinesContainer.style.pointerEvents = "none";
-      mindMapContainer.insertBefore(
-        svgLinesContainer,
-        mindMapContainer.firstChild
-      );
-    }
-    svgLinesContainer.setAttribute("width", mindMapContainer.scrollWidth);
-    svgLinesContainer.setAttribute("height", mindMapContainer.scrollHeight);
-  }
-
+  // ===== Connection Management =====
   function drawLine(node1Id, node2Id) {
     const node1El = document.getElementById(node1Id);
     const node2El = document.getElementById(node2Id);
@@ -434,10 +203,292 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- INITIALIZATION ---
+  // ===== Drag and Drop Handlers =====
+  function onNodeMouseDown(e) {
+    if (e.button !== 0) return;
+
+    activeDraggableNode = e.target.closest(".node");
+    if (!activeDraggableNode) return;
+
+    isDragging = false;
+    nodeClickPrevented = false;
+
+    const rect = activeDraggableNode.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+
+    activeDraggableNode.classList.add("dragging");
+    activeDraggableNode.style.zIndex = 1000;
+
+    document.addEventListener("mousemove", onNodeMouseMove);
+    document.addEventListener("mouseup", onNodeMouseUp);
+  }
+
+  function onNodeMouseMove(e) {
+    if (!activeDraggableNode) return;
+
+    if (!isDragging) {
+      isDragging = true;
+      nodeClickPrevented = true;
+    }
+
+    e.preventDefault();
+
+    const containerRect = mindMapContainer.getBoundingClientRect();
+    let newX = e.clientX - containerRect.left - dragOffsetX + mindMapContainer.scrollLeft;
+    let newY = e.clientY - containerRect.top - dragOffsetY + mindMapContainer.scrollTop;
+
+    const nodeWidth = activeDraggableNode.offsetWidth;
+    const nodeHeight = activeDraggableNode.offsetHeight;
+    newX = Math.max(0, Math.min(newX, mindMapContainer.scrollWidth - nodeWidth));
+    newY = Math.max(0, Math.min(newY, mindMapContainer.scrollHeight - nodeHeight));
+
+    activeDraggableNode.style.left = newX + "px";
+    activeDraggableNode.style.top = newY + "px";
+
+    const nodeData = nodes.find((n) => n.id === activeDraggableNode.id);
+    if (nodeData) {
+      nodeData.x = newX;
+      nodeData.y = newY;
+    }
+    updateConnections();
+  }
+
+  function onNodeMouseUp(e) {
+    if (activeDraggableNode) {
+      if (!isDragging) {
+        if (isConnectionMode) {
+          if (!connectionSourceNodeId) {
+            connectionSourceNodeId = activeDraggableNode.id;
+            activeDraggableNode.classList.add("connection-source");
+          } else {
+            const targetNodeId = activeDraggableNode.id;
+            const sourceNode = nodes.find((n) => n.id === connectionSourceNodeId);
+
+            if (sourceNode && sourceNode.id !== targetNodeId) {
+              if (!sourceNode.connections.includes(targetNodeId)) {
+                sourceNode.connections.push(targetNodeId);
+                updateConnections();
+              }
+            }
+
+            document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
+            isConnectionMode = false;
+            connectionSourceNodeId = null;
+          }
+        } else {
+          selectNode(activeDraggableNode.id);
+        }
+      }
+      activeDraggableNode.classList.remove("dragging");
+      activeDraggableNode.style.zIndex = "";
+    }
+
+    isDragging = false;
+    activeDraggableNode = null;
+    document.removeEventListener("mousemove", onNodeMouseMove);
+    document.removeEventListener("mouseup", onNodeMouseUp);
+  }
+
+  // ===== Event Listeners =====
+  // Rich Text Editor
+  if (editorToolbar) {
+    editorToolbar.addEventListener("click", (e) => {
+      const button = e.target.closest("button");
+      if (button && button.dataset.command) {
+        const command = button.dataset.command;
+        const value = button.dataset.value || null;
+        document.execCommand(command, false, value);
+        nodeInputArea.focus();
+      }
+    });
+  }
+
+  // File Upload
+  if (uploadFileToolbarButton) {
+    uploadFileToolbarButton.addEventListener("click", () => {
+      nodeFileInput.click();
+    });
+  }
+
+  if (nodeFileInput) {
+    nodeFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fileUrl = URL.createObjectURL(file);
+      const fileData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url: fileUrl
+      };
+
+      if (selectedNodeId) {
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          nodeData.fileData = fileData;
+          const nodeEl = document.getElementById(selectedNodeId);
+          if (nodeEl) {
+            nodeEl.dataset.fileData = JSON.stringify(fileData);
+          }
+          loadNodeInEditor(selectedNodeId);
+        }
+      } else {
+        addNode(file.name, 70, 70, "#FFFFE0", "", fileData);
+      }
+
+      nodeFileInput.value = "";
+    });
+  }
+
+  // Save Button
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      if (selectedNodeId) {
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          if (nodeData.fileData) {
+            return;
+          }
+          const currentHtmlContent = nodeInputArea.innerHTML;
+          const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+          nodeData.contentHtml = currentHtmlContent;
+          nodeData.contentText = currentTextContent;
+
+          const nodeElement = document.getElementById(selectedNodeId);
+          if (nodeElement) {
+            nodeElement.dataset.contentHtml = currentHtmlContent;
+            nodeElement.dataset.contentText = currentTextContent;
+          }
+        }
+      } else {
+        const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+        const currentHtmlContent = nodeInputArea.innerHTML;
+        if (currentTextContent.trim() || currentHtmlContent.trim()) {
+          addNode("New Node", 70, 70, "#FFFFE0", currentHtmlContent);
+        }
+      }
+    });
+  }
+
+  // Add Node Button
+  if (addNodeButton) {
+    addNodeButton.addEventListener("click", () => {
+      const canvasRect = mindMapContainer.getBoundingClientRect();
+      addNode(
+        "New Canvas Node",
+        Math.random() * (canvasRect.width - 100),
+        Math.random() * (canvasRect.height - 50),
+        "#FFFFE0",
+        "",
+        null
+      );
+      nodeInputArea.focus();
+    });
+  }
+
+  // Connect Nodes Button
+  if (connectNodesButton) {
+    connectNodesButton.addEventListener("click", () => {
+      isConnectionMode = true;
+      connectionSourceNodeId = null;
+    });
+  }
+
+  // Node Title Editing
+  const editBtn = document.querySelector(".edit-btn");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      const titleElement = editorTitle;
+      titleElement.contentEditable = true;
+      titleElement.focus();
+
+      const finishEditing = () => {
+        titleElement.contentEditable = false;
+        const newName = titleElement.textContent.trim();
+        if (selectedNodeId && newName) {
+          const node = nodes.find((n) => n.id === selectedNodeId);
+          if (node) {
+            node.name = newName;
+            const nodeEl = document.getElementById(selectedNodeId);
+            if (nodeEl) nodeEl.textContent = newName;
+          }
+        }
+      };
+
+      titleElement.addEventListener("blur", finishEditing);
+      titleElement.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          finishEditing();
+        }
+      });
+    });
+  }
+
+  // Delete Node Button
+  if (deleteNodeBtn) {
+    deleteNodeBtn.addEventListener("click", () => {
+      if (selectedNodeId) {
+        if (confirm("Are you sure you want to delete this node?")) {
+          deleteNode(selectedNodeId);
+        }
+      }
+    });
+  }
+
+  // ===== Initialization =====
+  function initializeStaticNodes() {
+    const staticNodeElements = mindMapContainer.querySelectorAll('.node:not([id^="node-generated-"])');
+    let maxIdNum = 0;
+
+    staticNodeElements.forEach((nodeEl) => {
+      if (nodes.find((n) => n.id === nodeEl.id)) return;
+
+      const idParts = nodeEl.id.split("-");
+      const numPart = parseInt(idParts[idParts.length - 1], 10);
+      if (!isNaN(numPart)) maxIdNum = Math.max(maxIdNum, numPart);
+
+      const nameText = nodeEl.textContent.trim();
+      const initialColor = nodeEl.style.backgroundColor || "#FFFFE0";
+      const newNodeData = {
+        id: nodeEl.id,
+        name: nameText,
+        contentHtml: escapeHTML(nameText),
+        contentText: nameText,
+        x: parseInt(nodeEl.style.left || "50", 10),
+        y: parseInt(nodeEl.style.top || "50", 10),
+        color: initialColor,
+        connections: [],
+      };
+      nodes.push(newNodeData);
+      nodeEl.dataset.contentHtml = newNodeData.contentHtml;
+      nodeEl.dataset.contentText = newNodeData.contentText;
+      nodeEl.addEventListener("mousedown", onNodeMouseDown);
+    });
+
+    nodeIdCounter = Math.max(nodeIdCounter, maxIdNum);
+
+    const lapTrinhWebNode = nodes.find((n) => n.id === "node-lap-trinh-web");
+    if (lapTrinhWebNode) {
+      lapTrinhWebNode.connections = ["node-oop", "node-csdl", "node-new", "node-uiux"];
+    }
+
+    if (nodes.length === 0) {
+      editorTitle.textContent = "New node";
+      nodeInputArea.innerHTML = "";
+      nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
+      selectedNodeId = null;
+    }
+    updateNodeSelectionVisual();
+  }
+
+  // Initialize the application
   initializeStaticNodes();
   updateConnections();
 
+  // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
     const resizeObserver = new ResizeObserver(() => updateConnections());
     resizeObserver.observe(mindMapContainer);
@@ -445,16 +496,16 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("resize", updateConnections);
   }
 
-  // Fallback for editor placeholder
+  // Editor placeholder handling
   if (nodeInputArea && nodeInputArea.getAttribute("placeholder")) {
-    if (nodeInputArea.innerHTML.trim() === "")
+    if (nodeInputArea.innerHTML.trim() === "") {
       nodeInputArea.classList.add("is-placeholder");
-    nodeInputArea.addEventListener("focus", () =>
-      nodeInputArea.classList.remove("is-placeholder")
-    );
+    }
+    nodeInputArea.addEventListener("focus", () => nodeInputArea.classList.remove("is-placeholder"));
     nodeInputArea.addEventListener("blur", () => {
-      if (nodeInputArea.innerHTML.trim() === "")
+      if (nodeInputArea.innerHTML.trim() === "") {
         nodeInputArea.classList.add("is-placeholder");
+      }
     });
   }
 });
