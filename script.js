@@ -174,6 +174,18 @@ document.addEventListener("DOMContentLoaded", () => {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
         } else if (nodeData.fileData.type === 'application/pdf') {
           fileViewerArea.innerHTML = `<embed src="${nodeData.fileData.url}" type="application/pdf" width="100%" height="100%">`;
+        } else if (nodeData.fileData.type.startsWith('video/')) {
+          fileViewerArea.innerHTML = `
+            <video controls style="max-width: 100%; max-height: 100%;">
+              <source src="${nodeData.fileData.url}" type="${nodeData.fileData.type}">
+              Your browser does not support the video tag.
+            </video>`;
+        } else if (nodeData.fileData.type.startsWith('audio/')) {
+          fileViewerArea.innerHTML = `
+            <audio controls style="width: 100%; margin: 20px 0;">
+              <source src="${nodeData.fileData.url}" type="${nodeData.fileData.type}">
+              Your browser does not support the audio tag.
+            </audio>`;
         }
       } else {
         nodeInputArea.style.display = "block";
@@ -388,18 +400,49 @@ document.addEventListener("DOMContentLoaded", () => {
         url: fileUrl
       };
 
+      // Add file type icon to node name
+      let fileIcon = '';
+      if (file.type.startsWith('image/')) {
+        fileIcon = '<i class="fas fa-image"></i> ';
+      } else if (file.type === 'application/pdf') {
+        fileIcon = '<i class="fas fa-file-pdf"></i> ';
+      } else if (file.type.startsWith('video/')) {
+        fileIcon = '<i class="fas fa-video"></i> ';
+      } else if (file.type.startsWith('audio/')) {
+        fileIcon = '<i class="fas fa-music"></i> ';
+      }
+
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
         if (nodeData) {
           nodeData.fileData = fileData;
+          // Keep original name and append file info
+          const originalName = nodeData.name || "New Node";
+          nodeData.name = originalName;
           const nodeEl = document.getElementById(selectedNodeId);
           if (nodeEl) {
             nodeEl.dataset.fileData = JSON.stringify(fileData);
+            // Show original name with file icon
+            nodeEl.innerHTML = fileIcon + escapeHTML(originalName);
           }
           loadNodeInEditor(selectedNodeId);
         }
       } else {
-        addNode(file.name, 70, 70, "#FFFFE0", "", fileData);
+        // For new nodes, place in center of viewport
+        const canvasPane = document.querySelector('.canvas-pane');
+        const paneRect = canvasPane.getBoundingClientRect();
+        
+        // Calculate the center of the visible area, taking into account zoom and pan
+        const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
+        const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
+        
+        // For new nodes, use a default name with file info
+        const defaultName = "New Node";
+        addNode(defaultName, centerX, centerY, "#FFFFE0", "", fileData);
+        const newNodeEl = document.getElementById(`node-generated-${nodeIdCounter}`);
+        if (newNodeEl) {
+          newNodeEl.innerHTML = fileIcon + escapeHTML(defaultName);
+        }
       }
 
       nodeFileInput.value = "";
@@ -440,10 +483,17 @@ document.addEventListener("DOMContentLoaded", () => {
   if (addNodeButton) {
     addNodeButton.addEventListener("click", () => {
       const canvasRect = mindMapContainer.getBoundingClientRect();
+      const canvasPane = document.querySelector('.canvas-pane');
+      const paneRect = canvasPane.getBoundingClientRect();
+      
+      // Calculate the center of the visible area, taking into account zoom and pan
+      const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
+      const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
+      
       addNode(
         "New Canvas Node",
-        Math.random() * (canvasRect.width - 100),
-        Math.random() * (canvasRect.height - 50),
+        centerX,
+        centerY,
         "#FFFFE0",
         "",
         null
