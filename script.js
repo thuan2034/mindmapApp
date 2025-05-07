@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadFileToolbarButton = document.getElementById("uploadFileToolbarButton");
   const connectNodesButton = document.getElementById("connectNodesButton");
   const deleteNodeBtn = document.getElementById("deleteNodeBtn");
+  const searchInput = document.querySelector(".search-container input");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -433,6 +434,78 @@ document.addEventListener("DOMContentLoaded", () => {
       if (selectedNodeId) {
         if (confirm("Are you sure you want to delete this node?")) {
           deleteNode(selectedNodeId);
+        }
+      }
+    });
+  }
+
+  // ===== Search Functionality =====
+  function searchNodes(query) {
+    // Remove previous search highlights
+    document.querySelectorAll('.node.search-highlight').forEach(node => {
+      node.classList.remove('search-highlight');
+    });
+
+    if (!query.trim()) {
+      return;
+    }
+
+    const searchResults = nodes.filter(node => 
+      node.name.toLowerCase().includes(query.toLowerCase())
+    );
+
+    // Highlight matching nodes
+    searchResults.forEach(node => {
+      const nodeElement = document.getElementById(node.id);
+      if (nodeElement) {
+        nodeElement.classList.add('search-highlight');
+      }
+    });
+
+    // If there's exactly one match, select it
+    if (searchResults.length === 1) {
+      selectNode(searchResults[0].id);
+    }
+
+    return searchResults;
+  }
+
+  // Search Input
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const query = e.target.value.trim();
+        const results = searchNodes(query);
+        
+        // Update search results count if needed
+        const searchContainer = searchInput.closest('.search-container');
+        let resultsCount = searchContainer.querySelector('.search-results-count');
+        
+        if (query && results) {
+          if (!resultsCount) {
+            resultsCount = document.createElement('span');
+            resultsCount.className = 'search-results-count';
+            searchContainer.appendChild(resultsCount);
+          }
+          resultsCount.textContent = `${results.length} result${results.length !== 1 ? 's' : ''}`;
+        } else if (resultsCount) {
+          resultsCount.remove();
+        }
+      }, 300); // Debounce search for better performance
+    });
+
+    // Clear search on escape
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        document.querySelectorAll('.node.search-highlight').forEach(node => {
+          node.classList.remove('search-highlight');
+        });
+        const resultsCount = searchInput.closest('.search-container').querySelector('.search-results-count');
+        if (resultsCount) {
+          resultsCount.remove();
         }
       }
     });
