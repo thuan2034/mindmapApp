@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const minimapIndicator = document.querySelector(".minimap-indicator");
   const resizableDivider = document.querySelector(".resizable-divider");
   const editorPane = document.querySelector(".editor-pane");
+  const switchToTextButton = document.getElementById("switchToTextButton");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -169,6 +170,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (nodeData.fileData) {
         nodeInputArea.style.display = "none";
         fileViewerArea.style.display = "block";
+        uploadFileToolbarButton.style.display = "none";
+        switchToTextButton.style.display = "inline-block";
         
         if (nodeData.fileData.type.startsWith('image/')) {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
@@ -190,6 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         nodeInputArea.style.display = "block";
         fileViewerArea.style.display = "none";
+        uploadFileToolbarButton.style.display = "inline-block";
+        switchToTextButton.style.display = "none";
         nodeInputArea.innerHTML = nodeData.contentHtml;
       }
       
@@ -869,6 +874,29 @@ document.addEventListener("DOMContentLoaded", () => {
         nodeIndicator.style.borderRadius = '2px';
         nodeIndicator.style.border = '1px solid rgba(0,0,0,0.2)';
         nodeContainer.appendChild(nodeIndicator);
+      }
+    });
+  }
+
+  // Add event listener for switching to text content
+  if (switchToTextButton) {
+    switchToTextButton.addEventListener("click", () => {
+      if (selectedNodeId) {
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          // Clear file data
+          nodeData.fileData = null;
+          
+          // Update node display
+          const nodeEl = document.getElementById(selectedNodeId);
+          if (nodeEl) {
+            nodeEl.removeAttribute('data-file-data');
+            nodeEl.innerHTML = escapeHTML(nodeData.name);
+          }
+          
+          // Switch to text editor
+          loadNodeInEditor(selectedNodeId);
+        }
       }
     });
   }
