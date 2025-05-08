@@ -57,7 +57,6 @@ A modern, interactive mind mapping tool built with HTML, CSS, and JavaScript, fe
 ├── index.html          # Main HTML file
 ├── style.css           # Styles
 ├── script.js           # Main application logic
-├── db.js              # Database operations
 ├── firebase.json      # Firebase configuration
 └── README.md          # This file
 ```
