@@ -3,6 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const mindMapContainer = document.getElementById("mindMapContainer");
   const nodeInputArea = document.getElementById("node-input-area");
   const fileViewerArea = document.getElementById("file-viewer-area");
+  const linkInputArea = document.getElementById("link-input-area");
+  const linkUrlInput = document.getElementById("link-url-input");
+  const linkDescriptionInput = document.getElementById("link-description-input");
+  const addLinkButton = document.getElementById("addLinkButton");
   const saveBtn = document.querySelector(".save-btn");
   const editorTitle = document.querySelector(".editor-pane h2");
   const addNodeButton = document.getElementById("addNodeButton");
@@ -23,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== State Variables =====
   let isConnectionMode = false;
   let connectionSourceNodeId = null;
-  let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData)
+  let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData, linkData)
   let selectedNodeId = null;
   let nodeIdCounter = 0;
   let isDragging = false;
@@ -128,12 +132,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (nodeData.fileData) {
       nodeDiv.dataset.fileData = JSON.stringify(nodeData.fileData);
     }
+    if (nodeData.linkData) {
+      nodeDiv.dataset.linkData = JSON.stringify(nodeData.linkData);
+    }
 
     nodeDiv.addEventListener("mousedown", onNodeMouseDown);
     return nodeDiv;
   }
 
-  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null) {
+  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null) {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
     const contentText = new DOMParser().parseFromString(defaultHtml, "text/html").body.textContent || "";
@@ -147,7 +154,8 @@ document.addEventListener("DOMContentLoaded", () => {
       y: y,
       color: color,
       connections: [],
-      fileData: fileData
+      fileData: fileData,
+      linkData: linkData
     };
     
     nodes.push(newNodeData);
@@ -159,6 +167,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function selectNode(nodeId) {
     if (nodeId === selectedNodeId && nodeInputArea.innerHTML !== "") return;
+    
+    // Clear any pending changes when selecting a new node
+    pendingChanges = null;
+    
     loadNodeInEditor(nodeId);
   }
 
@@ -168,10 +180,15 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
       
+      // Hide all content areas first
+      nodeInputArea.style.display = "none";
+      fileViewerArea.style.display = "none";
+      linkInputArea.style.display = "none";
+      uploadFileToolbarButton.style.display = "none";
+      switchToTextButton.style.display = "none";
+      
       if (nodeData.fileData) {
-        nodeInputArea.style.display = "none";
         fileViewerArea.style.display = "block";
-        uploadFileToolbarButton.style.display = "none";
         switchToTextButton.style.display = "inline-block";
         
         if (nodeData.fileData.type.startsWith('image/')) {
@@ -191,11 +208,14 @@ document.addEventListener("DOMContentLoaded", () => {
               Your browser does not support the audio tag.
             </audio>`;
         }
+      } else if (nodeData.linkData) {
+        linkInputArea.style.display = "block";
+        switchToTextButton.style.display = "inline-block";
+        linkUrlInput.value = nodeData.linkData.url;
+        linkDescriptionInput.value = nodeData.linkData.description;
       } else {
         nodeInputArea.style.display = "block";
-        fileViewerArea.style.display = "none";
         uploadFileToolbarButton.style.display = "inline-block";
-        switchToTextButton.style.display = "none";
         nodeInputArea.innerHTML = nodeData.contentHtml;
       }
       
@@ -498,9 +518,45 @@ document.addEventListener("DOMContentLoaded", () => {
         // Show text editor preview
         nodeInputArea.style.display = "block";
         fileViewerArea.style.display = "none";
+        linkInputArea.style.display = "none"; // Explicitly hide link input area
         uploadFileToolbarButton.style.display = "inline-block";
         switchToTextButton.style.display = "none";
         nodeInputArea.innerHTML = "";
+      }
+    });
+  }
+
+  // Add Link Button
+  if (addLinkButton) {
+    addLinkButton.addEventListener("click", () => {
+      if (selectedNodeId) {
+        // Store pending change to switch to link mode
+        pendingChanges = {
+          type: 'switchToLink'
+        };
+        
+        // Show link input preview
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "none";
+        linkInputArea.style.display = "block";
+        uploadFileToolbarButton.style.display = "none";
+        switchToTextButton.style.display = "inline-block";
+        
+        // Clear previous values
+        linkUrlInput.value = "";
+        linkDescriptionInput.value = "";
+      } else {
+        // For new nodes, place in center of viewport
+        const canvasPane = document.querySelector('.canvas-pane');
+        const paneRect = canvasPane.getBoundingClientRect();
+        
+        // Calculate the center of the visible area, taking into account zoom and pan
+        const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
+        const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
+        
+        // For new nodes, use a default name
+        const defaultName = "New Link";
+        addNode(defaultName, centerX, centerY, "#FFFFE0", "", null, { url: "", description: "" });
       }
     });
   }
@@ -517,23 +573,51 @@ document.addEventListener("DOMContentLoaded", () => {
             if (pendingChanges.type === 'file') {
               // Apply pending file changes
               nodeData.fileData = pendingChanges.fileData;
-              nodeData.name = newName; // Update name even with file
+              nodeData.linkData = null; // Clear link data
+              nodeData.name = newName;
               const nodeEl = document.getElementById(selectedNodeId);
               if (nodeEl) {
                 nodeEl.dataset.fileData = JSON.stringify(pendingChanges.fileData);
+                nodeEl.removeAttribute('data-link-data');
                 nodeEl.innerHTML = pendingChanges.fileIcon + escapeHTML(newName);
               }
             } else if (pendingChanges.type === 'switchToText') {
               // Apply switch to text changes
               nodeData.fileData = null;
-              nodeData.name = newName; // Update name when switching to text
+              nodeData.linkData = null;
+              nodeData.name = newName;
               const nodeEl = document.getElementById(selectedNodeId);
               if (nodeEl) {
                 nodeEl.removeAttribute('data-file-data');
+                nodeEl.removeAttribute('data-link-data');
                 nodeEl.innerHTML = escapeHTML(newName);
+              }
+            } else if (pendingChanges.type === 'switchToLink') {
+              // Apply switch to link changes
+              nodeData.fileData = null;
+              nodeData.linkData = {
+                url: linkUrlInput.value.trim(),
+                description: linkDescriptionInput.value.trim()
+              };
+              nodeData.name = newName;
+              const nodeEl = document.getElementById(selectedNodeId);
+              if (nodeEl) {
+                nodeEl.removeAttribute('data-file-data');
+                nodeEl.dataset.linkData = JSON.stringify(nodeData.linkData);
+                nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
               }
             }
             pendingChanges = null;
+          } else if (nodeData.linkData) {
+            // Update link data
+            nodeData.linkData.url = linkUrlInput.value.trim();
+            nodeData.linkData.description = linkDescriptionInput.value.trim();
+            nodeData.name = newName;
+            const nodeEl = document.getElementById(selectedNodeId);
+            if (nodeEl) {
+              nodeEl.dataset.linkData = JSON.stringify(nodeData.linkData);
+              nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
+            }
           } else if (!nodeData.fileData) {
             // Apply text content changes
             const currentHtmlContent = nodeInputArea.innerHTML;

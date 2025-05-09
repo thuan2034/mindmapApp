@@ -57,12 +57,17 @@
                         <button title="Ordered List" data-command="insertOrderedList"><i class="fas fa-list-ol"></i></button>
                         <button title="Upload File" id="uploadFileToolbarButton"><i class="fas fa-file-upload"></i></button>
                         <input type="file" id="nodeFileInput" accept="image/*,application/pdf,video/*,audio/*" style="display: none;">
+                        <button title="Add Link" id="addLinkButton"><i class="fas fa-link"></i></button>
                         <button title="Switch to Text" id="switchToTextButton" style="display: none;"><i class="fas fa-font"></i></button>
                     </div>
                     <div class="editor-content">
                         <label for="node-input-area" class="sr-only">Nội dung</label>
                         <div id="node-input-area" contenteditable="true" placeholder="Nhập nội dung..."></div>
                         <div id="file-viewer-area" style="display: none;"></div>
+                        <div id="link-input-area" style="display: none;">
+                            <input type="url" id="link-url-input" placeholder="Enter URL..." class="link-url-input">
+                            <textarea id="link-description-input" placeholder="Enter link description..." class="link-description-input"></textarea>
+                        </div>
                     </div>
                     <button class="save-btn">Lưu</button>
                 </section>

@@ -375,6 +375,75 @@ body, html {
     border-radius: 4px;
 }
 
+/* Link input area styles */
+#link-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.link-url-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.link-url-input:focus {
+    outline: none;
+    border-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+}
+
+.link-description-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    min-height: 100px;
+    resize: vertical;
+}
+
+.link-description-input:focus {
+    outline: none;
+    border-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+}
+
+/* Link preview styles */
+.link-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.link-preview a {
+    color: #2196F3;
+    text-decoration: none;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.link-preview a:hover {
+    text-decoration: underline;
+}
+
+.link-preview .link-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
 /* Node styles for media files */
 .node i {
     margin-right: 5px;
