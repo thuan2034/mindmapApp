@@ -425,8 +425,110 @@ document.addEventListener("DOMContentLoaded", () => {
       if (button && button.dataset.command) {
         const command = button.dataset.command;
         const value = button.dataset.value || null;
-        document.execCommand(command, false, value);
+        
+        // Handle alignment commands
+        if (command.startsWith('justify')) {
+          // Remove active class from all alignment buttons
+          editorToolbar.querySelectorAll('button[data-command^="justify"]').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          
+          // Add active class to clicked button
+          button.classList.add('active');
+        }
+        
+        // Handle list commands
+        if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
+          // Toggle the list type
+          document.execCommand(command, false, value);
+          
+          // Update button states
+          updateListButtons();
+        } else if (command === 'indent' || command === 'outdent') {
+          // Handle indentation
+          document.execCommand(command, false, value);
+          
+          // Update button states after indentation
+          setTimeout(updateListButtons, 0);
+        } else {
+          document.execCommand(command, false, value);
+        }
+        
         nodeInputArea.focus();
+      }
+    });
+  }
+
+  // Add function to update alignment button states
+  function updateAlignmentButtons() {
+    const alignmentCommands = ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'];
+    alignmentCommands.forEach(cmd => {
+      const button = editorToolbar.querySelector(`button[data-command="${cmd}"]`);
+      if (button) {
+        if (document.queryCommandState(cmd)) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      }
+    });
+  }
+
+  // Update alignment buttons when selection changes
+  if (nodeInputArea) {
+    nodeInputArea.addEventListener('keyup', () => {
+      updateAlignmentButtons();
+      updateListButtons();
+    });
+    nodeInputArea.addEventListener('mouseup', () => {
+      updateAlignmentButtons();
+      updateListButtons();
+    });
+  }
+
+  // Add function to update list button states
+  function updateListButtons() {
+    const listCommands = ['insertUnorderedList', 'insertOrderedList'];
+    listCommands.forEach(cmd => {
+      const button = editorToolbar.querySelector(`button[data-command="${cmd}"]`);
+      if (button) {
+        if (document.queryCommandState(cmd)) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      }
+    });
+  }
+
+  // Add keyboard shortcuts for lists
+  if (nodeInputArea) {
+    nodeInputArea.addEventListener('keydown', (e) => {
+      // Tab key for indentation
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          document.execCommand('outdent', false);
+        } else {
+          document.execCommand('indent', false);
+        }
+        updateListButtons();
+      }
+      
+      // Enter key handling for lists
+      if (e.key === 'Enter') {
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const listItem = range.startContainer.closest('li');
+        
+        if (listItem) {
+          // If at the end of a list item, create a new list item
+          if (range.startOffset === range.startContainer.length) {
+            e.preventDefault();
+            document.execCommand('insertLineBreak');
+            updateListButtons();
+          }
+        }
       }
     });
   }
@@ -745,8 +847,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Connect Nodes Button
   if (connectNodesButton) {
     connectNodesButton.addEventListener("click", () => {
-      isConnectionMode = true;
+      isConnectionMode = !isConnectionMode;
       connectionSourceNodeId = null;
+      connectNodesButton.classList.toggle('active');
+      
+      // Remove any existing connection source highlighting
+      document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
+      
+      // Update button text based on mode
+      if (isConnectionMode) {
+        connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
+      } else {
+        connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Connect Nodes';
+      }
     });
   }
 

@@ -111,6 +111,7 @@ body, html {
     border-radius: 20px;
     padding: 5px 15px;
     position: relative;
+    margin-left:30em;
 }
 
 .search-container .search-icon {
@@ -309,6 +310,22 @@ body, html {
     pointer-events: none; /* Ensure clicks go to the button */
 }
 
+/* Add styles for toolbar divider */
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #ddd;
+    margin: 0 5px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Add styles for active alignment buttons */
+.editor-toolbar button[data-command^="justify"].active {
+    background-color: #e0e0e0;
+    border-color: #999;
+}
+
 .editor-content {
     flex-grow: 1; /* Take remaining space */
     margin-bottom: 15px;
@@ -327,11 +344,59 @@ body, html {
     overflow-y: auto;
     background-color: white;
 }
+
+/* Add improved list styles */
+#node-input-area ul,
+#node-input-area ol {
+    margin: 0.5em 0;
+    padding-left: 2em;
+}
+
+#node-input-area ul {
+    list-style-type: disc;
+}
+
+#node-input-area ul ul {
+    list-style-type: circle;
+}
+
+#node-input-area ul ul ul {
+    list-style-type: square;
+}
+
+#node-input-area ol {
+    list-style-type: decimal;
+}
+
+#node-input-area ol ol {
+    list-style-type: lower-alpha;
+}
+
+#node-input-area ol ol ol {
+    list-style-type: lower-roman;
+}
+
+#node-input-area li {
+    margin: 0.3em 0;
+    padding-left: 0.5em;
+}
+
+#node-input-area li::marker {
+    color: #666;
+}
+
+#node-input-area li:focus-within {
+    outline: 2px solid #d6336c;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 #node-input-area:focus {
     outline: none;
     border-color: #d6336c;
     box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
 }
+
 #node-input-area[placeholder]:empty:before {
     content: attr(placeholder);
     color: #aaa;
@@ -635,27 +700,34 @@ body, html {
     position: absolute;
     top: 20px;
     right: 70px;
-    background-color: #d6336c;
+    background-color: #2196F3;
     color: white;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 18px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 8px;
     z-index: 1000;
+    transition: all 0.3s ease;
 }
 
 .connect-nodes-btn-canvas:hover {
-    background-color: #b02758;
+    background-color: #1976D2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .connect-nodes-btn-canvas.active {
-    background-color: #2196F3;
+    background-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.3);
+}
+
+.connect-nodes-btn-canvas i {
+    font-size: 16px;
 }
 
 /* SVG lines for connections */
