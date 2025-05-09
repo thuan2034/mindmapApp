@@ -225,6 +225,15 @@ body, html {
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     overflow-y: auto;
     flex-shrink: 0;
+    transition: transform 0.3s ease-in-out;
+}
+
+.editor-pane.hidden {
+    transform: translateX(-100%);
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
 }
 
 .editor-header {
@@ -476,6 +485,11 @@ body, html {
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     cursor: grab;
     min-width: 0; /* Allow canvas to shrink below its content size */
+    transition: border-radius 0.3s ease-in-out;
+}
+
+.editor-pane.hidden + .canvas-pane {
+    border-radius: 8px;
 }
 
 .canvas-pane:active {

@@ -175,7 +175,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Clear any pending changes when selecting a new node
     pendingChanges = null;
     
-    loadNodeInEditor(nodeId);
+    const editorPane = document.querySelector('.editor-pane');
+    if (nodeId) {
+        editorPane.classList.remove('hidden');
+        loadNodeInEditor(nodeId);
+    } else {
+        editorPane.classList.add('hidden');
+        selectedNodeId = null;
+        editorTitle.textContent = "New node";
+        nodeInputArea.innerHTML = "";
+        nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
+    }
   }
 
   function loadNodeInEditor(nodeId) {
@@ -514,6 +524,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const titleElement = editorTitle;
       titleElement.contentEditable = true;
       titleElement.focus();
+    });
+  }
+
+  // Back Button hides the editor pane
+  const backBtn = document.querySelector('.back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      selectNode(null);
     });
   }
 
@@ -977,6 +995,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeStaticNodes();
   updateConnections();
   centerView(); // Center the view after initialization
+
+  // Hide editor pane initially since no node is selected
+  document.querySelector('.editor-pane').classList.add('hidden');
 
   // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
