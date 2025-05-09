@@ -16,10 +16,18 @@
             <ul>
                 <li class="sidebar-item active"><a href="#"><i class="fas fa-home"></i></a></li>
                 <li class="sidebar-item"><a href="#"><i class="fas fa-compass"></i></a></li>
-                <li class="sidebar-item"><a href="#"><i class="fas fa-bell"></i></a></li>
                 <li class="sidebar-item"><a href="#"><i class="fas fa-folder"></i></a></li>
                 <li class="sidebar-item"><a href="#"><i class="fas fa-cog"></i></a></li>
             </ul>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Search something here">
+                <div class="search-navigation">
+                    <button id="prevResultBtn" title="Previous result"><i class="fas fa-chevron-up"></i></button>
+                    <span class="result-count">0/0</span>
+                    <button id="nextResultBtn" title="Next result"><i class="fas fa-chevron-down"></i></button>
+                </div>
+            </div>
             <div class="user-actions">
                 <button class="action-btn notification-btn"><i class="fas fa-bell"></i><span class="notification-dot"></span></button>
                 <div class="user-profile">
@@ -29,17 +37,7 @@
             </div>
         </nav>
         <div class="main-wrapper">
-            <header class="topbar">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" placeholder="Search something here">
-                    <div class="search-navigation">
-                        <button id="prevResultBtn" title="Previous result"><i class="fas fa-chevron-up"></i></button>
-                        <span class="result-count">0/0</span>
-                        <button id="nextResultBtn" title="Next result"><i class="fas fa-chevron-down"></i></button>
-                    </div>
-                </div>
-            </header>
+          
             <main class="content-area">
                 <section class="editor-pane">
                     <div class="editor-header">
@@ -60,7 +58,6 @@
                         <button title="Upload File" id="uploadFileToolbarButton"><i class="fas fa-file-upload"></i></button>
                         <input type="file" id="nodeFileInput" accept="image/*,application/pdf,video/*,audio/*" style="display: none;">
                         <button title="Switch to Text" id="switchToTextButton" style="display: none;"><i class="fas fa-font"></i></button>
-                        <button title="Connect Nodes" id="connectNodesButton"><i class="fas fa-link"></i></button>
                     </div>
                     <div class="editor-content">
                         <label for="node-input-area" class="sr-only">Nội dung</label>
@@ -87,6 +84,7 @@
                         <div class="minimap-viewport"></div>
                     </div>
                     <button id="addNodeButton" class="add-node-btn-canvas" title="Add new node to canvas">+</button>
+                    <button id="connectNodesButton" class="connect-nodes-btn-canvas" title="Connect nodes"><i class="fas fa-link"></i></button>
                 </section>
             </main>
         </div>

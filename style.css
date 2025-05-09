@@ -207,7 +207,6 @@ body, html {
     display: flex;
     flex-grow: 1;
     background-color: #f9f9f9;
-    padding: 15px;
     gap: 0;
     overflow: hidden;
     position: relative;
@@ -547,6 +546,33 @@ body, html {
 }
 .add-node-btn-canvas:hover {
     background-color: #b02758;
+}
+
+.connect-nodes-btn-canvas {
+    position: absolute;
+    top: 20px;
+    right: 70px;
+    background-color: #d6336c;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.connect-nodes-btn-canvas:hover {
+    background-color: #b02758;
+}
+
+.connect-nodes-btn-canvas.active {
+    background-color: #2196F3;
 }
 
 /* SVG lines for connections */
