@@ -46,6 +46,7 @@ body, html {
 .sidebar-logo {
     display: flex;
     align-items: center;
+    margin-right: 20px;
 }
 
 .sidebar-logo img {
@@ -56,12 +57,39 @@ body, html {
     border-radius: 5px;
 }
 
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 20px;
+    padding: 5px 15px;
+    position: relative;
+    width: 300px;
+    margin-left: 40em;
+}
+
+.search-container .search-icon {
+    color: #757575;
+    margin-right: 8px;
+}
+
+.search-container input {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    padding: 8px 0;
+    width: 100%;
+}
+
 .sidebar ul {
     list-style: none;
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 20px;
+    margin: 0;
+    padding: 0;
+    margin-right: auto; /* Push the list to the left */
 }
 
 .sidebar-item {
@@ -93,37 +121,13 @@ body, html {
     overflow: hidden; /* Prevents scrollbars on the wrapper itself */
 }
 
-/* Top Bar */
-.topbar {
-    height: 60px;
+/* Canvas Header */
+.canvas-header {
     background-color: #ffffff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
+    padding: 10px 20px;
     border-bottom: 1px solid #e0e0e0;
-}
-
-.search-container {
     display: flex;
-    align-items: center;
-    background-color: #f0f0f0;
-    border-radius: 20px;
-    padding: 5px 15px;
-    position: relative;
-}
-
-.search-container .search-icon {
-    color: #757575;
-    margin-right: 8px;
-}
-
-.search-container input {
-    border: none;
-    outline: none;
-    background-color: transparent;
-    padding: 8px 0;
-    width: 250px;
+    justify-content: flex-end;
 }
 
 .search-results-count {
@@ -159,6 +163,7 @@ body, html {
 .user-actions {
     display: flex;
     align-items: center;
+    margin-left: auto; /* Push user actions to the right */
 }
 
 .action-btn {
@@ -207,7 +212,6 @@ body, html {
     display: flex;
     flex-grow: 1;
     background-color: #f9f9f9;
-    padding: 15px;
     gap: 0;
     overflow: hidden;
     position: relative;
@@ -217,7 +221,7 @@ body, html {
 .editor-pane {
     width: 45%;
     min-width: 0;
-    max-width: 800px;
+    max-width: 1000px;
     background-color: #ffffff;
     border-radius: 8px 0 0 8px;
     padding: 20px;
@@ -301,25 +305,36 @@ body, html {
     pointer-events: none; /* Ensure clicks go to the button */
 }
 
-.content-type-selector {
-    padding: 6px 10px;
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #ddd;
+    margin: 0 5px;
+}
+
+.content-type-btn {
+    background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 3px;
-    background-color: #fff;
-    color: #555;
-    font-size: 14px;
+    padding: 6px 10px;
     cursor: pointer;
-    margin-right: 5px;
+    font-size: 14px;
+    color: #555;
+    transition: all 0.2s ease;
 }
 
-.content-type-selector:hover {
+.content-type-btn:hover {
+    background-color: #e9e9e9;
+}
+
+.content-type-btn.active {
+    background-color: #d6336c;
+    color: white;
     border-color: #d6336c;
 }
 
-.content-type-selector:focus {
-    outline: none;
-    border-color: #d6336c;
-    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+.content-type-btn.active:hover {
+    background-color: #b02758;
 }
 
 .editor-content {
@@ -570,6 +585,35 @@ body, html {
     background-color: #b02758;
 }
 
+.connect-nodes-btn-canvas {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: background-color 0.3s;
+}
+
+.connect-nodes-btn-canvas:hover {
+    background-color: #1976D2;
+}
+
+.connect-nodes-btn-canvas.active {
+    background-color: #1565C0;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.4);
+}
+
 /* SVG lines for connections */
 .connector-line {
     stroke: #888;
@@ -611,31 +655,33 @@ body, html {
     .sidebar {
         height: auto;
         padding: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .sidebar-logo {
+        margin-bottom: 10px;
+    }
+    
+    .canvas-header {
+        padding: 10px;
+    }
+    
+    .search-container {
+        width: 100%;
+        max-width: 300px;
     }
     
     .sidebar ul {
+        order: 2;
         flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .sidebar-item {
-        margin: 5px;
-    }
-    
-    .editor-pane {
+        justify-content: flex-start; /* Align items to the left */
         width: 100%;
-        max-width: none;
-        margin-bottom: 15px;
-        height: 50vh;
+        margin: 10px 0;
     }
     
-    .content-area {
-        flex-direction: column;
-    }
-    
-    .canvas-pane {
-        height: calc(50vh - 75px);
-        min-height: 300px;
+    .user-actions {
+        order: 1;
+        margin-left: auto;
     }
 }
 
@@ -650,24 +696,19 @@ body, html {
         margin-bottom: 10px;
     }
     
-    .sidebar ul {
-        width: 100%;
-        justify-content: space-around;
-    }
-    
-    .topbar {
-        flex-direction: column;
-        height: auto;
+    .canvas-header {
         padding: 10px;
     }
     
     .search-container {
-        margin-bottom: 10px;
         width: 100%;
+        max-width: none;
     }
     
-    .search-container input {
-        width: calc(100% - 30px);
+    .sidebar ul {
+        width: 100%;
+        justify-content: flex-start; /* Align items to the left */
+        margin: 10px 0;
     }
     
     .user-actions {
@@ -716,4 +757,56 @@ body, html {
     font-size: 12px;
     color: #666;
     margin: 0 5px;
+}
+
+.content-type-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.link-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+}
+
+.link-input-area input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.link-input-area input:focus {
+    outline: none;
+    border-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+}
+
+.link-preview {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.preview-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2196F3;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.2s;
+}
+
+.preview-link:hover {
+    color: #1976D2;
+    text-decoration: underline;
+}
+
+.preview-link i {
+    font-size: 14px;
 }
