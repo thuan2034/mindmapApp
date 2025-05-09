@@ -6,6 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const linkInputArea = document.getElementById("link-input-area");
   const linkUrlInput = document.getElementById("link-url-input");
   const linkDescriptionInput = document.getElementById("link-description-input");
+  const linkPreview = document.getElementById("link-preview");
+  const previewLink = document.getElementById("preview-link");
+  const previewDescription = document.getElementById("preview-description");
   const addLinkButton = document.getElementById("addLinkButton");
   const saveBtn = document.querySelector(".save-btn");
   const editorTitle = document.querySelector(".editor-pane h2");
@@ -23,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const resizableDivider = document.querySelector(".resizable-divider");
   const editorPane = document.querySelector(".editor-pane");
   const switchToTextButton = document.getElementById("switchToTextButton");
+  const switchToFileButton = document.getElementById("switchToFileButton");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -186,10 +190,12 @@ document.addEventListener("DOMContentLoaded", () => {
       linkInputArea.style.display = "none";
       uploadFileToolbarButton.style.display = "none";
       switchToTextButton.style.display = "none";
+      switchToFileButton.style.display = "none";
       
       if (nodeData.fileData) {
         fileViewerArea.style.display = "block";
         switchToTextButton.style.display = "inline-block";
+        switchToFileButton.style.display = "none";
         
         if (nodeData.fileData.type.startsWith('image/')) {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
@@ -211,11 +217,15 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (nodeData.linkData) {
         linkInputArea.style.display = "block";
         switchToTextButton.style.display = "inline-block";
+        switchToFileButton.style.display = "inline-block";
         linkUrlInput.value = nodeData.linkData.url;
         linkDescriptionInput.value = nodeData.linkData.description;
+        updateLinkPreview();
       } else {
         nodeInputArea.style.display = "block";
         uploadFileToolbarButton.style.display = "inline-block";
+        switchToTextButton.style.display = "none";
+        switchToFileButton.style.display = "none";
         nodeInputArea.innerHTML = nodeData.contentHtml;
       }
       
@@ -456,6 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fileViewerArea.style.display = "block";
         uploadFileToolbarButton.style.display = "none";
         switchToTextButton.style.display = "inline-block";
+        switchToFileButton.style.display = "none";
         
         if (file.type.startsWith('image/')) {
           fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
@@ -521,7 +532,31 @@ document.addEventListener("DOMContentLoaded", () => {
         linkInputArea.style.display = "none"; // Explicitly hide link input area
         uploadFileToolbarButton.style.display = "inline-block";
         switchToTextButton.style.display = "none";
+        switchToFileButton.style.display = "none";
         nodeInputArea.innerHTML = "";
+      }
+    });
+  }
+
+  // Switch to File Button
+  if (switchToFileButton) {
+    switchToFileButton.addEventListener("click", () => {
+      if (selectedNodeId) {
+        // Store pending change to switch to file mode
+        pendingChanges = {
+          type: 'switchToFile'
+        };
+        
+        // Show file input preview
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "none";
+        linkInputArea.style.display = "none";
+        uploadFileToolbarButton.style.display = "inline-block";
+        switchToTextButton.style.display = "inline-block";
+        switchToFileButton.style.display = "none";
+        
+        // Trigger file input click
+        nodeFileInput.click();
       }
     });
   }
@@ -541,10 +576,12 @@ document.addEventListener("DOMContentLoaded", () => {
         linkInputArea.style.display = "block";
         uploadFileToolbarButton.style.display = "none";
         switchToTextButton.style.display = "inline-block";
+        switchToFileButton.style.display = "inline-block";
         
         // Clear previous values
         linkUrlInput.value = "";
         linkDescriptionInput.value = "";
+        linkPreview.style.display = "none";
       } else {
         // For new nodes, place in center of viewport
         const canvasPane = document.querySelector('.canvas-pane');
@@ -1107,5 +1144,30 @@ document.addEventListener("DOMContentLoaded", () => {
         nodeContainer.appendChild(nodeIndicator);
       }
     });
+  }
+
+  // Add real-time link preview functionality
+  function updateLinkPreview() {
+    const url = linkUrlInput.value.trim();
+    const description = linkDescriptionInput.value.trim();
+    
+    if (url) {
+      // Ensure URL has protocol
+      const fullUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+      previewLink.href = fullUrl;
+      previewLink.textContent = url;
+      previewDescription.textContent = description;
+      linkPreview.style.display = 'block';
+    } else {
+      linkPreview.style.display = 'none';
+    }
+  }
+
+  // Add input event listeners for real-time preview
+  if (linkUrlInput) {
+    linkUrlInput.addEventListener('input', updateLinkPreview);
+  }
+  if (linkDescriptionInput) {
+    linkDescriptionInput.addEventListener('input', updateLinkPreview);
   }
 });
