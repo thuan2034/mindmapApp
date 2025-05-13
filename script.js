@@ -144,6 +144,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return nodeDiv;
   }
 
+    function updateNodeText(nodeDiv, nodeData) {
+    const displayText = nodeData.name || "Node";
+    nodeDiv.innerHTML = escapeHTML(displayText);
+  }
+
+
+
   function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null) {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
@@ -193,7 +200,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (nodeData) {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
-      
+      editorTitle.addEventListener("input", () => {
+      nodeData.name = editorTitle.textContent.trim();
+      const nodeDiv = document.getElementById(selectedNodeId);
+      if (nodeDiv) {
+        updateNodeText(nodeDiv, nodeData);
+      }
+      });
+
       // Hide all content areas first
       nodeInputArea.style.display = "none";
       fileViewerArea.style.display = "none";

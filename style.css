@@ -673,6 +673,28 @@ body, html {
     box-shadow: 0 0 5px rgba(214, 51, 108, 0.5);
 }
 
+.plus-btn {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #007bff;
+  color: white;
+  text-align: center;
+  line-height: 20px;
+  border-radius: 50%;
+  font-weight: bold;
+  cursor: pointer;
+  display: none;
+}
+
+.node:hover .plus-btn {
+  display: block;
+}
+
+.plus-btn.top { top: -10px; left: 40px; }
+.plus-btn.right { top: 15px; right: -10px; }
+.plus-btn.bottom { bottom: -10px; left: 40px; }
+.plus-btn.left { top: 15px; left: -10px; }
 
 .add-node-btn-canvas {
     position: absolute;
