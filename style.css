@@ -754,8 +754,6 @@ body, html {
 
 /* SVG lines for connections */
 .connector-line {
-    stroke: #888;
-    stroke-width: 2px;
     fill: none;
     pointer-events:  visibleStroke; 
 }
@@ -859,7 +857,7 @@ body, html {
 }
 
 .connection-source {
-    border: 2px solid #2196F3 !important;
+    border: 2px solid #f3ec21 !important;
 }
 
 .search-navigation {
@@ -898,4 +896,54 @@ body, html {
     font-size: 12px;
     color: #666;
     margin: 0 5px;
+}
+
+.connector-line.active-line {
+  stroke: #00f;
+  stroke-width: 6;
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 4px #00f);
+  cursor: pointer;
+}
+
+#linePopup {
+  position: absolute;
+  display: none;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: Arial, sans-serif;
+  width: 220px;
+}
+
+#linePopup label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+#linePopup input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+#applyLineSettingsBtn {
+  background: #007bff;
+  color: white;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+#applyLineSettingsBtn:hover {
+  background: #0056b3;
 }

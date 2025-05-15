@@ -54,6 +54,37 @@ document.addEventListener("DOMContentLoaded", () => {
   let startX;
   let startWidth;
 
+document.getElementById("applyLineSettingsBtn").addEventListener("click", function () {
+  const popup = document.getElementById("linePopup");
+  const lineId = popup.dataset.activeLineId;
+  const from = popup.dataset.from;
+  const to = popup.dataset.to;
+
+  const line = document.getElementById(lineId);
+  if (!line) return;
+
+  // Get values from inputs
+  const newColor = document.getElementById("lineColorInput").value;
+  const newThickness = document.getElementById("lineThicknessInput").value;
+  const newLabel = document.getElementById("lineLabelInput").value;
+
+  // Update line visually
+  line.setAttribute("stroke", newColor);
+  line.setAttribute("stroke-width", newThickness);
+
+  // Update the connection data
+  const connection = connections.find(
+    (c) => c.id === lineId 
+  );
+  if (connection) {
+    connection.color = newColor;
+    connection.label = newLabel;
+  }
+
+  // Hide popup and remove glow
+  popup.style.display = "none";
+  line.classList.remove("active-line");
+});
   function initResizableDivider() {
     const resizableDivider = document.querySelector(".resizable-divider");
     const editorPane = document.querySelector(".editor-pane");
@@ -326,6 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!node1El || !node2El || !svgLinesContainer) return;
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.id = connection.id; 
     const x1 = node1El.offsetLeft + node1El.offsetWidth / 2;
     const y1 = node1El.offsetTop + node1El.offsetHeight / 2;
     const x2 = node2El.offsetLeft + node2El.offsetWidth / 2;
@@ -337,14 +369,81 @@ document.addEventListener("DOMContentLoaded", () => {
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
     line.setAttribute("stroke", "#000");           
-    line.setAttribute("stroke-width", "2");        
+    line.setAttribute("stroke-width", "60");        
     line.setAttribute("pointer-events", "visibleStroke");
+    
     line.dataset.from = connection.node1;
     line.dataset.to = connection.node2;
+
     
+    line.addEventListener("click", function (e) {
+    e.stopPropagation(); 
+
+
+    document.querySelectorAll(".connector-line").forEach((l) =>
+      l.classList.remove("active-line")
+    );
+    line.classList.add("active-line");
+
+    
+    const popup = document.getElementById("linePopup");
+    popup.style.left = e.pageX + "px";
+    popup.style.top = e.pageY + "px";
+    popup.style.display = "block";
+
+    
+    document.getElementById("lineColorInput").value = connection.color || "#000000";
+    document.getElementById("lineThicknessInput").value = parseInt(line.getAttribute("stroke-width")) || 2;
+    document.getElementById("lineLabelInput").value = connection.label || "";
+
+    
+    popup.dataset.activeLineId = connection.id;
+    popup.dataset.from = connection.node1;
+    popup.dataset.to = connection.node2;
+  });
 
     svgLinesContainer.appendChild(line);
   }
+
+  function showLinePopup(event, connection, lineElement) {
+  const popup = document.getElementById("linePopup");
+  if (!popup) return;
+
+  // Set current values
+  document.getElementById("lineColorInput").value = connection.color || "#000000";
+  document.getElementById("lineThicknessInput").value = connection.thickness || 2;
+  document.getElementById("lineLabelInput").value = connection.label || "";
+
+  // Position the popup near the mouse
+  popup.style.left = event.pageX + "px";
+  popup.style.top = event.pageY + "px";
+  popup.style.display = "block";
+
+  // Save the current line and connection in the popup's dataset
+  popup.dataset.connectionId = connection.id;
+  popup.dataset.lineElement = lineElement;
+
+  // Apply settings on button click
+  const applyBtn = document.getElementById("applyLineSettingsBtn");
+  applyBtn.onclick = function () {
+    const newColor = document.getElementById("lineColorInput").value;
+    const newThickness = document.getElementById("lineThicknessInput").value;
+    const newLabel = document.getElementById("lineLabelInput").value;
+
+    // Apply changes to the SVG line
+    lineElement.setAttribute("stroke", newColor);
+    lineElement.setAttribute("stroke-width", newThickness);
+
+    // Update your connection data model
+    connection.color = newColor;
+    connection.thickness = parseInt(newThickness);
+    connection.label = newLabel;
+
+    // Close popup
+    popup.style.display = "none";
+  };
+}
+
 
   function updateConnections() {
     ensureSvgContainer();
@@ -1337,3 +1436,21 @@ document.addEventListener("DOMContentLoaded", () => {
     linkDescriptionInput.addEventListener('input', updateLinkPreview);
   }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("click", function (e) {
+    const popup = document.getElementById("linePopup");
+    if (!popup) return;
+
+    const isVisible = getComputedStyle(popup).display !== "none";
+
+    if (isVisible && !popup.contains(e.target)) {
+      popup.style.display = "none";
+      document.querySelectorAll(".connector-line").forEach((line) =>
+      line.classList.remove("active-line")
+    );
+    }
+  });
+});
+
+
