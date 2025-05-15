@@ -757,7 +757,7 @@ body, html {
     stroke: #888;
     stroke-width: 2px;
     fill: none;
-    pointer-events: none; /* Lines should not interfere with node interaction */
+    pointer-events:  visibleStroke; 
 }
 
 /* Resizable Divider */
