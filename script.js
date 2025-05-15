@@ -208,12 +208,13 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     return newNodeData;
   }
 
-  function addConnection(label = "label",color = "#FFFFE0",node1Id,node2Id) {
+  function addConnection(label = "label",color = "#FFFFE0",size = "15",node1Id,node2Id) {
     connectionIdCounter++;
     const newConnectionData = {
       id: `node-generated-${connectionIdCounter}`,
       label: label,
       color: color,
+      size: size,
       node1: node1Id, 
       node2: node2Id,
     };
@@ -359,8 +360,8 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
-    line.setAttribute("stroke", "0#00");           
-    line.setAttribute("stroke-width", "60");        
+    line.setAttribute("stroke", connection.color);           
+    line.setAttribute("stroke-width", connection.size);        
     line.setAttribute("pointer-events", "visibleStroke");
     
     line.dataset.from = connection.node1;
@@ -478,7 +479,7 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
               if (!sourceNode.connections.includes(targetNodeId)) {
                 sourceNode.connections.push(targetNodeId);
                 targetNode.connections.push(connectionSourceNodeId);
-                addConnection("label","#FFFFE0",connectionSourceNodeId,targetNodeId)
+                addConnection("label","#FFFFE0","15",connectionSourceNodeId,targetNodeId)
                 updateConnections();
               }
               
