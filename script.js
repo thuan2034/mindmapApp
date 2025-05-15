@@ -57,8 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("applyLineSettingsBtn").addEventListener("click", function () {
   const popup = document.getElementById("linePopup");
   const lineId = popup.dataset.activeLineId;
-  const from = popup.dataset.from;
-  const to = popup.dataset.to;
 
   const line = document.getElementById(lineId);
   if (!line) return;
@@ -250,13 +248,6 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     if (nodeData) {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
-      editorTitle.addEventListener("input", () => {
-      nodeData.name = editorTitle.textContent.trim();
-      const nodeDiv = document.getElementById(selectedNodeId);
-      if (nodeDiv) {
-        updateNodeText(nodeDiv, nodeData);
-      }
-      });
 
       // Hide all content areas first
       nodeInputArea.style.display = "none";
@@ -368,7 +359,7 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
-    line.setAttribute("stroke", "#000");           
+    line.setAttribute("stroke", "0#00");           
     line.setAttribute("stroke-width", "60");        
     line.setAttribute("pointer-events", "visibleStroke");
     
@@ -404,46 +395,6 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
 
     svgLinesContainer.appendChild(line);
   }
-
-  function showLinePopup(event, connection, lineElement) {
-  const popup = document.getElementById("linePopup");
-  if (!popup) return;
-
-  // Set current values
-  document.getElementById("lineColorInput").value = connection.color || "#000000";
-  document.getElementById("lineThicknessInput").value = connection.thickness || 2;
-  document.getElementById("lineLabelInput").value = connection.label || "";
-
-  // Position the popup near the mouse
-  popup.style.left = event.pageX + "px";
-  popup.style.top = event.pageY + "px";
-  popup.style.display = "block";
-
-  // Save the current line and connection in the popup's dataset
-  popup.dataset.connectionId = connection.id;
-  popup.dataset.lineElement = lineElement;
-
-  // Apply settings on button click
-  const applyBtn = document.getElementById("applyLineSettingsBtn");
-  applyBtn.onclick = function () {
-    const newColor = document.getElementById("lineColorInput").value;
-    const newThickness = document.getElementById("lineThicknessInput").value;
-    const newLabel = document.getElementById("lineLabelInput").value;
-
-    // Apply changes to the SVG line
-    lineElement.setAttribute("stroke", newColor);
-    lineElement.setAttribute("stroke-width", newThickness);
-
-    // Update your connection data model
-    connection.color = newColor;
-    connection.thickness = parseInt(newThickness);
-    connection.label = newLabel;
-
-    // Close popup
-    popup.style.display = "none";
-  };
-}
-
 
   function updateConnections() {
     ensureSvgContainer();
