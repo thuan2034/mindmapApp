@@ -32,8 +32,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let isConnectionMode = false;
   let connectionSourceNodeId = null;
   let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData, linkData)
+  let connections = [];
   let selectedNodeId = null;
+  let selectedConnectionId = null;
   let nodeIdCounter = 0;
+  let connectionIdCounter = 0;
   let isDragging = false;
   let activeDraggableNode = null;
   let dragOffsetX, dragOffsetY;
@@ -144,6 +147,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return nodeDiv;
   }
 
+    function updateNodeText(nodeDiv, nodeData) {
+    const displayText = nodeData.name || "Node";
+    nodeDiv.innerHTML = escapeHTML(displayText);
+  }
+
+
+
   function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null) {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
@@ -169,6 +179,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return newNodeData;
   }
 
+  function addConnection(label = "label",color = "#FFFFE0",node1Id,node2Id) {
+    connectionIdCounter++;
+    const newConnectionData = {
+      id: `node-generated-${connectionIdCounter}`,
+      label: label,
+      color: color,
+      node1: node1Id, 
+      node2: node2Id,
+    };
+    
+    connections.push(newConnectionData);
+    selectedConnectionId=newConnectionData.id;
+    return newConnectionData;
+  }
+
   function selectNode(nodeId) {
     if (nodeId === selectedNodeId && nodeInputArea.innerHTML !== "") return;
     
@@ -188,12 +213,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+
   function loadNodeInEditor(nodeId) {
     const nodeData = nodes.find((n) => n.id === nodeId);
     if (nodeData) {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
-      
+      editorTitle.addEventListener("input", () => {
+      nodeData.name = editorTitle.textContent.trim();
+      const nodeDiv = document.getElementById(selectedNodeId);
+      if (nodeDiv) {
+        updateNodeText(nodeDiv, nodeData);
+      }
+      });
+
       // Hide all content areas first
       nodeInputArea.style.display = "none";
       fileViewerArea.style.display = "none";
@@ -287,9 +320,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== Connection Management =====
-  function drawLine(node1Id, node2Id) {
-    const node1El = document.getElementById(node1Id);
-    const node2El = document.getElementById(node2Id);
+  function drawLine(connection) {
+    const node1El = document.getElementById(connection.node1);
+    const node2El = document.getElementById(connection.node2);
     if (!node1El || !node2El || !svgLinesContainer) return;
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -303,8 +336,12 @@ document.addEventListener("DOMContentLoaded", () => {
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
-    line.dataset.from = node1Id;
-    line.dataset.to = node2Id;
+    line.setAttribute("stroke", "#000");           
+    line.setAttribute("stroke-width", "2");        
+    line.setAttribute("pointer-events", "visibleStroke");
+    line.dataset.from = connection.node1;
+    line.dataset.to = connection.node2;
+    
 
     svgLinesContainer.appendChild(line);
   }
@@ -312,14 +349,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateConnections() {
     ensureSvgContainer();
     svgLinesContainer.innerHTML = "";
-    nodes.forEach((node) => {
-      if (node.connections) {
-        node.connections.forEach((targetId) => {
-          if (nodes.find((n) => n.id === targetId)) {
-            drawLine(node.id, targetId);
-          }
-        });
-      }
+    connections.forEach((connection) => {    
+            drawLine(connection);
     });
   }
 
@@ -388,19 +419,25 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!connectionSourceNodeId) {
             connectionSourceNodeId = activeDraggableNode.id;
             activeDraggableNode.classList.add("connection-source");
-          } else {
+          }  else {
             const targetNodeId = activeDraggableNode.id;
             const sourceNode = nodes.find((n) => n.id === connectionSourceNodeId);
-
+            const targetNode = nodes.find((n) => n.id === targetNodeId);
+            
             if (sourceNode && sourceNode.id !== targetNodeId) {
               if (!sourceNode.connections.includes(targetNodeId)) {
                 sourceNode.connections.push(targetNodeId);
+                targetNode.connections.push(connectionSourceNodeId);
+                addConnection("label","#FFFFE0",connectionSourceNodeId,targetNodeId)
                 updateConnections();
               }
+              
             }
-
+             
             document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
             isConnectionMode = false;
+            connectNodesButton.classList.remove("active");
+            connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
             connectionSourceNodeId = null;
           }
         } else {
@@ -1071,11 +1108,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     nodeIdCounter = Math.max(nodeIdCounter, maxIdNum);
-
-    const lapTrinhWebNode = nodes.find((n) => n.id === "node-lap-trinh-web");
-    if (lapTrinhWebNode) {
-      lapTrinhWebNode.connections = ["node-oop", "node-csdl", "node-new", "node-uiux"];
-    }
 
     if (nodes.length === 0) {
       editorTitle.textContent = "New node";
