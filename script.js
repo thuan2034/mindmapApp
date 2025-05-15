@@ -811,6 +811,10 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     saveBtn.addEventListener("click", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        const nodeDiv = document.getElementById(selectedNodeId);
+        if (nodeDiv) {
+          updateNodeText(nodeDiv, nodeData);
+        }
         if (nodeData) {
           const newName = editorTitle.textContent.trim();
           
