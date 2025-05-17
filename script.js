@@ -4,12 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const nodeInputArea = document.getElementById("node-input-area");
   const fileViewerArea = document.getElementById("file-viewer-area");
   const linkInputArea = document.getElementById("link-input-area");
-  const linkUrlInput = document.getElementById("link-url-input");
-  const linkDescriptionInput = document.getElementById("link-description-input");
-  const linkPreview = document.getElementById("link-preview");
-  const previewLink = document.getElementById("preview-link");
-  const previewDescription = document.getElementById("preview-description");
-  const addLinkButton = document.getElementById("addLinkButton");
+  const linkUrlInput = document.getElementById("linkUrlInput");
+  const linkTextInput = document.getElementById("linkTextInput");
+  const contentTypeSelector = document.getElementById("contentTypeSelector");
   const saveBtn = document.querySelector(".save-btn");
   const editorTitle = document.querySelector(".editor-pane h2");
   const addNodeButton = document.getElementById("addNodeButton");
@@ -26,17 +23,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const resizableDivider = document.querySelector(".resizable-divider");
   const editorPane = document.querySelector(".editor-pane");
   const switchToTextButton = document.getElementById("switchToTextButton");
-  const switchToFileButton = document.getElementById("switchToFileButton");
+
+   document.getElementById('updateShapeBtn').addEventListener('click', () => {
+
+    const selectedShape = document.getElementById('nodeShapeSelect').value;
+    const nodeEl = document.getElementById(selectedNodeId);
+    const nodeData = nodes.find(n => n.id === selectedNodeId);
+    if (nodeEl && nodeData) {
+      nodeData.shape = selectedShape;
+      nodeEl.classList.remove('shape-rectangle', 'shape-circle', 'shape-ellipse');
+      nodeEl.classList.add(`shape-${selectedShape}`);
+      document.querySelector('.node-shape-editor').style.display = 'none';
+    }
+  });
 
   // ===== State Variables =====
   let isConnectionMode = false;
   let connectionSourceNodeId = null;
-  let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData, linkData)
-  let connections = [];
+  let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData)
   let selectedNodeId = null;
-  let selectedConnectionId = null;
   let nodeIdCounter = 0;
-  let connectionIdCounter = 0;
   let isDragging = false;
   let activeDraggableNode = null;
   let dragOffsetX, dragOffsetY;
@@ -54,35 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let startX;
   let startWidth;
 
-document.getElementById("applyLineSettingsBtn").addEventListener("click", function () {
-  const popup = document.getElementById("linePopup");
-  const lineId = popup.dataset.activeLineId;
-
-  const line = document.getElementById(lineId);
-  if (!line) return;
-
-  // Get values from inputs
-  const newColor = document.getElementById("lineColorInput").value;
-  const newThickness = document.getElementById("lineThicknessInput").value;
-  const newLabel = document.getElementById("lineLabelInput").value;
-
-  // Update line visually
-  line.setAttribute("stroke", newColor);
-  line.setAttribute("stroke-width", newThickness);
-
-  // Update the connection data
-  const connection = connections.find(
-    (c) => c.id === lineId 
-  );
-  if (connection) {
-    connection.color = newColor;
-    connection.label = newLabel;
-  }
-
-  // Hide popup and remove glow
-  popup.style.display = "none";
-  line.classList.remove("active-line");
-});
   function initResizableDivider() {
     const resizableDivider = document.querySelector(".resizable-divider");
     const editorPane = document.querySelector(".editor-pane");
@@ -161,6 +138,8 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
       nodeDiv.style.backgroundColor = nodeData.color;
     }
     
+    nodeDiv.classList.add(nodeData.shape || "rectangle");
+  
     const displayText = nodeData.name || "Node";
     nodeDiv.innerHTML = escapeHTML(displayText);
     nodeDiv.dataset.contentHtml = nodeData.contentHtml;
@@ -168,22 +147,13 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     if (nodeData.fileData) {
       nodeDiv.dataset.fileData = JSON.stringify(nodeData.fileData);
     }
-    if (nodeData.linkData) {
-      nodeDiv.dataset.linkData = JSON.stringify(nodeData.linkData);
-    }
-
+  
     nodeDiv.addEventListener("mousedown", onNodeMouseDown);
+    nodeDiv.addEventListener("click", () => selectNode(nodeData.id)); // Đảm bảo chọn node
     return nodeDiv;
   }
 
-    function updateNodeText(nodeDiv, nodeData) {
-    const displayText = nodeData.name || "Node";
-    nodeDiv.innerHTML = escapeHTML(displayText);
-  }
-
-
-
-  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null) {
+  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null) {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
     const contentText = new DOMParser().parseFromString(defaultHtml, "text/html").body.textContent || "";
@@ -196,9 +166,9 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
       x: x,
       y: y,
       color: color,
+      shape: shape,
       connections: [],
-      fileData: fileData,
-      linkData: linkData
+      fileData: fileData
     };
     
     nodes.push(newNodeData);
@@ -208,60 +178,38 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     return newNodeData;
   }
 
-  function addConnection(label = "label",color = "#FFFFE0",size = "15",node1Id,node2Id) {
-    connectionIdCounter++;
-    const newConnectionData = {
-      id: `node-generated-${connectionIdCounter}`,
-      label: label,
-      color: color,
-      size: size,
-      node1: node1Id, 
-      node2: node2Id,
-    };
-    
-    connections.push(newConnectionData);
-    selectedConnectionId=newConnectionData.id;
-    return newConnectionData;
-  }
-
   function selectNode(nodeId) {
     if (nodeId === selectedNodeId && nodeInputArea.innerHTML !== "") return;
-    
-    // Clear any pending changes when selecting a new node
-    pendingChanges = null;
-    
-    const editorPane = document.querySelector('.editor-pane');
-    if (nodeId) {
-        editorPane.classList.remove('hidden');
-        loadNodeInEditor(nodeId);
+    loadNodeInEditor(nodeId);
+
+    document.querySelector('.node-shape-editor').style.display = 'block';
+
+    const nodeData = nodes.find(n => n.id === nodeId);
+    if (nodeData && nodeData.shape) {
+      document.getElementById('nodeShapeSelect').value = nodeData.shape;
     } else {
-        editorPane.classList.add('hidden');
-        selectedNodeId = null;
-        editorTitle.textContent = "New node";
-        nodeInputArea.innerHTML = "";
-        nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
+      document.getElementById('nodeShapeSelect').value = 'rectangle'; // Mặc định
     }
   }
-
 
   function loadNodeInEditor(nodeId) {
     const nodeData = nodes.find((n) => n.id === nodeId);
     if (nodeData) {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
-
-      // Hide all content areas first
-      nodeInputArea.style.display = "none";
-      fileViewerArea.style.display = "none";
-      linkInputArea.style.display = "none";
-      uploadFileToolbarButton.style.display = "none";
-      switchToTextButton.style.display = "none";
-      switchToFileButton.style.display = "none";
+      
+      // Show/hide content type buttons based on current content type
+      const uploadFileBtn = document.getElementById("uploadFileToolbarButton");
+      const addLinkBtn = document.getElementById("addLinkButton");
+      const switchToTextBtn = document.getElementById("switchToTextButton");
       
       if (nodeData.fileData) {
+        // File content type
+        nodeInputArea.style.display = "none";
         fileViewerArea.style.display = "block";
-        switchToTextButton.style.display = "inline-block";
-        switchToFileButton.style.display = "none";
+        uploadFileBtn.style.display = "none";
+        addLinkBtn.style.display = "inline-block";
+        switchToTextBtn.style.display = "inline-block";
         
         if (nodeData.fileData.type.startsWith('image/')) {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
@@ -281,18 +229,38 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
             </audio>`;
         }
       } else if (nodeData.linkData) {
-        linkInputArea.style.display = "block";
-        switchToTextButton.style.display = "inline-block";
-        switchToFileButton.style.display = "inline-block";
-        linkUrlInput.value = nodeData.linkData.url;
-        linkDescriptionInput.value = nodeData.linkData.description;
-        updateLinkPreview();
+        // Link content type
+        nodeInputArea.style.display = "none";
+        fileViewerArea.style.display = "none";
+        uploadFileBtn.style.display = "inline-block";
+        addLinkBtn.style.display = "none";
+        switchToTextBtn.style.display = "inline-block";
+        
+        // Show link input fields and preview
+        const linkInputArea = document.createElement('div');
+        linkInputArea.className = 'link-input-area';
+        linkInputArea.innerHTML = `
+          <input type="url" id="linkUrlInput" placeholder="Enter URL" value="${nodeData.linkData.url || ''}">
+          <input type="text" id="linkTextInput" placeholder="Enter link text" value="${nodeData.linkData.text || ''}">
+          ${nodeData.linkData.url ? `
+            <div class="link-preview">
+              <a href="${nodeData.linkData.url}" target="_blank" class="preview-link">
+                <i class="fas fa-external-link-alt"></i> ${nodeData.linkData.text || nodeData.linkData.url}
+              </a>
+            </div>
+          ` : ''}
+        `;
+        fileViewerArea.innerHTML = '';
+        fileViewerArea.appendChild(linkInputArea);
+        fileViewerArea.style.display = "block";
       } else {
+        // Text content type (default)
         nodeInputArea.style.display = "block";
-        uploadFileToolbarButton.style.display = "inline-block";
-        switchToTextButton.style.display = "none";
-        switchToFileButton.style.display = "none";
-        nodeInputArea.innerHTML = nodeData.contentHtml;
+        fileViewerArea.style.display = "none";
+        uploadFileBtn.style.display = "inline-block";
+        addLinkBtn.style.display = "inline-block";
+        switchToTextBtn.style.display = "none";
+        nodeInputArea.innerHTML = nodeData.contentHtml || '';
       }
       
       updateNodeSelectionVisual();
@@ -343,13 +311,12 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
   }
 
   // ===== Connection Management =====
-  function drawLine(connection) {
-    const node1El = document.getElementById(connection.node1);
-    const node2El = document.getElementById(connection.node2);
+  function drawLine(node1Id, node2Id) {
+    const node1El = document.getElementById(node1Id);
+    const node2El = document.getElementById(node2Id);
     if (!node1El || !node2El || !svgLinesContainer) return;
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.id = connection.id; 
     const x1 = node1El.offsetLeft + node1El.offsetWidth / 2;
     const y1 = node1El.offsetTop + node1El.offsetHeight / 2;
     const x2 = node2El.offsetLeft + node2El.offsetWidth / 2;
@@ -360,39 +327,8 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
-    line.setAttribute("stroke", connection.color);           
-    line.setAttribute("stroke-width", connection.size);        
-    line.setAttribute("pointer-events", "visibleStroke");
-    
-    line.dataset.from = connection.node1;
-    line.dataset.to = connection.node2;
-
-    
-    line.addEventListener("click", function (e) {
-    e.stopPropagation(); 
-
-
-    document.querySelectorAll(".connector-line").forEach((l) =>
-      l.classList.remove("active-line")
-    );
-    line.classList.add("active-line");
-
-    
-    const popup = document.getElementById("linePopup");
-    popup.style.left = e.pageX + "px";
-    popup.style.top = e.pageY + "px";
-    popup.style.display = "block";
-
-    
-    document.getElementById("lineColorInput").value = connection.color || "#000000";
-    document.getElementById("lineThicknessInput").value = parseInt(line.getAttribute("stroke-width")) || 2;
-    document.getElementById("lineLabelInput").value = connection.label || "";
-
-    
-    popup.dataset.activeLineId = connection.id;
-    popup.dataset.from = connection.node1;
-    popup.dataset.to = connection.node2;
-  });
+    line.dataset.from = node1Id;
+    line.dataset.to = node2Id;
 
     svgLinesContainer.appendChild(line);
   }
@@ -400,8 +336,14 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
   function updateConnections() {
     ensureSvgContainer();
     svgLinesContainer.innerHTML = "";
-    connections.forEach((connection) => {    
-            drawLine(connection);
+    nodes.forEach((node) => {
+      if (node.connections) {
+        node.connections.forEach((targetId) => {
+          if (nodes.find((n) => n.id === targetId)) {
+            drawLine(node.id, targetId);
+          }
+        });
+      }
     });
   }
 
@@ -470,25 +412,19 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
           if (!connectionSourceNodeId) {
             connectionSourceNodeId = activeDraggableNode.id;
             activeDraggableNode.classList.add("connection-source");
-          }  else {
+          } else {
             const targetNodeId = activeDraggableNode.id;
             const sourceNode = nodes.find((n) => n.id === connectionSourceNodeId);
-            const targetNode = nodes.find((n) => n.id === targetNodeId);
-            
+
             if (sourceNode && sourceNode.id !== targetNodeId) {
               if (!sourceNode.connections.includes(targetNodeId)) {
                 sourceNode.connections.push(targetNodeId);
-                targetNode.connections.push(connectionSourceNodeId);
-                addConnection("label","#FFFFE0","15",connectionSourceNodeId,targetNodeId)
                 updateConnections();
               }
-              
             }
-             
+
             document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
             isConnectionMode = false;
-            connectNodesButton.classList.remove("active");
-            connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
             connectionSourceNodeId = null;
           }
         } else {
@@ -513,110 +449,8 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
       if (button && button.dataset.command) {
         const command = button.dataset.command;
         const value = button.dataset.value || null;
-        
-        // Handle alignment commands
-        if (command.startsWith('justify')) {
-          // Remove active class from all alignment buttons
-          editorToolbar.querySelectorAll('button[data-command^="justify"]').forEach(btn => {
-            btn.classList.remove('active');
-          });
-          
-          // Add active class to clicked button
-          button.classList.add('active');
-        }
-        
-        // Handle list commands
-        if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
-          // Toggle the list type
-          document.execCommand(command, false, value);
-          
-          // Update button states
-          updateListButtons();
-        } else if (command === 'indent' || command === 'outdent') {
-          // Handle indentation
-          document.execCommand(command, false, value);
-          
-          // Update button states after indentation
-          setTimeout(updateListButtons, 0);
-        } else {
-          document.execCommand(command, false, value);
-        }
-        
+        document.execCommand(command, false, value);
         nodeInputArea.focus();
-      }
-    });
-  }
-
-  // Add function to update alignment button states
-  function updateAlignmentButtons() {
-    const alignmentCommands = ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'];
-    alignmentCommands.forEach(cmd => {
-      const button = editorToolbar.querySelector(`button[data-command="${cmd}"]`);
-      if (button) {
-        if (document.queryCommandState(cmd)) {
-          button.classList.add('active');
-        } else {
-          button.classList.remove('active');
-        }
-      }
-    });
-  }
-
-  // Update alignment buttons when selection changes
-  if (nodeInputArea) {
-    nodeInputArea.addEventListener('keyup', () => {
-      updateAlignmentButtons();
-      updateListButtons();
-    });
-    nodeInputArea.addEventListener('mouseup', () => {
-      updateAlignmentButtons();
-      updateListButtons();
-    });
-  }
-
-  // Add function to update list button states
-  function updateListButtons() {
-    const listCommands = ['insertUnorderedList', 'insertOrderedList'];
-    listCommands.forEach(cmd => {
-      const button = editorToolbar.querySelector(`button[data-command="${cmd}"]`);
-      if (button) {
-        if (document.queryCommandState(cmd)) {
-          button.classList.add('active');
-        } else {
-          button.classList.remove('active');
-        }
-      }
-    });
-  }
-
-  // Add keyboard shortcuts for lists
-  if (nodeInputArea) {
-    nodeInputArea.addEventListener('keydown', (e) => {
-      // Tab key for indentation
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        if (e.shiftKey) {
-          document.execCommand('outdent', false);
-        } else {
-          document.execCommand('indent', false);
-        }
-        updateListButtons();
-      }
-      
-      // Enter key handling for lists
-      if (e.key === 'Enter') {
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const listItem = range.startContainer.closest('li');
-        
-        if (listItem) {
-          // If at the end of a list item, create a new list item
-          if (range.startOffset === range.startContainer.length) {
-            e.preventDefault();
-            document.execCommand('insertLineBreak');
-            updateListButtons();
-          }
-        }
       }
     });
   }
@@ -641,66 +475,49 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
         url: fileUrl
       };
 
-      // Add file type icon to node name
-      let fileIcon = '';
-      if (file.type.startsWith('image/')) {
-        fileIcon = '<i class="fas fa-image"></i> ';
-      } else if (file.type === 'application/pdf') {
-        fileIcon = '<i class="fas fa-file-pdf"></i> ';
-      } else if (file.type.startsWith('video/')) {
-        fileIcon = '<i class="fas fa-video"></i> ';
-      } else if (file.type.startsWith('audio/')) {
-        fileIcon = '<i class="fas fa-music"></i> ';
-      }
-
       if (selectedNodeId) {
-        // Store pending changes instead of applying immediately
-        pendingChanges = {
-          type: 'file',
-          fileData: fileData,
-          fileIcon: fileIcon
-        };
-
-        // Show preview in editor
-        nodeInputArea.style.display = "none";
-        fileViewerArea.style.display = "block";
-        uploadFileToolbarButton.style.display = "none";
-        switchToTextButton.style.display = "inline-block";
-        switchToFileButton.style.display = "none";
-        
-        if (file.type.startsWith('image/')) {
-          fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
-        } else if (file.type === 'application/pdf') {
-          fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
-        } else if (file.type.startsWith('video/')) {
-          fileViewerArea.innerHTML = `
-            <video controls style="max-width: 100%; max-height: 100%;">
-              <source src="${fileUrl}" type="${file.type}">
-              Your browser does not support the video tag.
-            </video>`;
-        } else if (file.type.startsWith('audio/')) {
-          fileViewerArea.innerHTML = `
-            <audio controls style="width: 100%; margin: 20px 0;">
-              <source src="${fileUrl}" type="${file.type}">
-              Your browser does not support the audio tag.
-            </audio>`;
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          // Store the new file data temporarily without clearing existing data
+          pendingChanges = {
+            fileData: fileData,
+            linkData: null,
+            contentHtml: null
+          };
+          
+          // Show the file preview
+          fileViewerArea.style.display = "block";
+          nodeInputArea.style.display = "none";
+          
+          if (fileData.type.startsWith('image/')) {
+            fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
+          } else if (fileData.type === 'application/pdf') {
+            fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
+          } else if (fileData.type.startsWith('video/')) {
+            fileViewerArea.innerHTML = `
+              <video controls style="max-width: 100%; max-height: 100%;">
+                <source src="${fileUrl}" type="${fileData.type}">
+                Your browser does not support the video tag.
+              </video>`;
+          } else if (fileData.type.startsWith('audio/')) {
+            fileViewerArea.innerHTML = `
+              <audio controls style="width: 100%; margin: 20px 0;">
+                <source src="${fileUrl}" type="${fileData.type}">
+                Your browser does not support the audio tag.
+              </audio>`;
+          }
         }
       } else {
-        // For new nodes, place in center of viewport
+        // Create new node with file
         const canvasPane = document.querySelector('.canvas-pane');
         const paneRect = canvasPane.getBoundingClientRect();
         
-        // Calculate the center of the visible area, taking into account zoom and pan
         const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
         const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
         
-        // For new nodes, use a default name with file info
-        const defaultName = "New Node";
-        addNode(defaultName, centerX, centerY, "#FFFFE0", "", fileData);
-        const newNodeEl = document.getElementById(`node-generated-${nodeIdCounter}`);
-        if (newNodeEl) {
-          newNodeEl.innerHTML = fileIcon + escapeHTML(defaultName);
-        }
+        const nodeData = addNode(file.name, centerX, centerY, "#FFFFE0");
+        nodeData.fileData = fileData;
+        loadNodeInEditor(nodeData.id);
       }
 
       nodeFileInput.value = "";
@@ -717,91 +534,17 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     });
   }
 
-  // Back Button hides the editor pane
-  const backBtn = document.querySelector('.back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      selectNode(null);
-    });
-  }
-
   // Switch to Text Button
   if (switchToTextButton) {
     switchToTextButton.addEventListener("click", () => {
       if (selectedNodeId) {
-        // Store pending change to switch to text mode
-        pendingChanges = {
-          type: 'switchToText'
-        };
-        
-        // Show text editor preview
-        nodeInputArea.style.display = "block";
-        fileViewerArea.style.display = "none";
-        linkInputArea.style.display = "none"; // Explicitly hide link input area
-        uploadFileToolbarButton.style.display = "inline-block";
-        switchToTextButton.style.display = "none";
-        switchToFileButton.style.display = "none";
-        nodeInputArea.innerHTML = "";
-      }
-    });
-  }
-
-  // Switch to File Button
-  if (switchToFileButton) {
-    switchToFileButton.addEventListener("click", () => {
-      if (selectedNodeId) {
-        // Store pending change to switch to file mode
-        pendingChanges = {
-          type: 'switchToFile'
-        };
-        
-        // Show file input preview
-        nodeInputArea.style.display = "none";
-        fileViewerArea.style.display = "none";
-        linkInputArea.style.display = "none";
-        uploadFileToolbarButton.style.display = "inline-block";
-        switchToTextButton.style.display = "inline-block";
-        switchToFileButton.style.display = "none";
-        
-        // Trigger file input click
-        nodeFileInput.click();
-      }
-    });
-  }
-
-  // Add Link Button
-  if (addLinkButton) {
-    addLinkButton.addEventListener("click", () => {
-      if (selectedNodeId) {
-        // Store pending change to switch to link mode
-        pendingChanges = {
-          type: 'switchToLink'
-        };
-        
-        // Show link input preview
-        nodeInputArea.style.display = "none";
-        fileViewerArea.style.display = "none";
-        linkInputArea.style.display = "block";
-        uploadFileToolbarButton.style.display = "none";
-        switchToTextButton.style.display = "inline-block";
-        switchToFileButton.style.display = "inline-block";
-        
-        // Clear previous values
-        linkUrlInput.value = "";
-        linkDescriptionInput.value = "";
-        linkPreview.style.display = "none";
-      } else {
-        // For new nodes, place in center of viewport
-        const canvasPane = document.querySelector('.canvas-pane');
-        const paneRect = canvasPane.getBoundingClientRect();
-        
-        // Calculate the center of the visible area, taking into account zoom and pan
-        const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
-        const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
-        
-        // For new nodes, use a default name
-        const defaultName = "New Link";
-        addNode(defaultName, centerX, centerY, "#FFFFE0", "", null, { url: "", description: "" });
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          // Switch to text mode without clearing existing data
+          nodeInputArea.style.display = "block";
+          fileViewerArea.style.display = "none";
+          nodeInputArea.innerHTML = nodeData.contentHtml || '';
+        }
       }
     });
   }
@@ -811,82 +554,14 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     saveBtn.addEventListener("click", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
-        const nodeDiv = document.getElementById(selectedNodeId);
-        if (nodeDiv) {
-          updateNodeText(nodeDiv, nodeData);
-        }
         if (nodeData) {
           const newName = editorTitle.textContent.trim();
           
-          if (pendingChanges) {
-            if (pendingChanges.type === 'file') {
-              // Apply pending file changes
-              nodeData.fileData = pendingChanges.fileData;
-              nodeData.linkData = null; // Clear link data
-              nodeData.name = newName;
-              const nodeEl = document.getElementById(selectedNodeId);
-              if (nodeEl) {
-                nodeEl.dataset.fileData = JSON.stringify(pendingChanges.fileData);
-                nodeEl.removeAttribute('data-link-data');
-                nodeEl.innerHTML = pendingChanges.fileIcon + escapeHTML(newName);
-              }
-            } else if (pendingChanges.type === 'switchToText') {
-              // Apply switch to text changes
-              nodeData.fileData = null;
-              nodeData.linkData = null;
-              nodeData.name = newName;
-              const nodeEl = document.getElementById(selectedNodeId);
-              if (nodeEl) {
-                nodeEl.removeAttribute('data-file-data');
-                nodeEl.removeAttribute('data-link-data');
-                nodeEl.innerHTML = escapeHTML(newName);
-              }
-            } else if (pendingChanges.type === 'switchToLink') {
-              // Apply switch to link changes
-              nodeData.fileData = null;
-              nodeData.linkData = {
-                url: linkUrlInput.value.trim(),
-                description: linkDescriptionInput.value.trim()
-              };
-              nodeData.name = newName;
-              const nodeEl = document.getElementById(selectedNodeId);
-              if (nodeEl) {
-                nodeEl.removeAttribute('data-file-data');
-                nodeEl.dataset.linkData = JSON.stringify(nodeData.linkData);
-                nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
-              }
-            }
-            pendingChanges = null;
-          } else if (nodeData.linkData) {
-            // Update link data
-            nodeData.linkData.url = linkUrlInput.value.trim();
-            nodeData.linkData.description = linkDescriptionInput.value.trim();
-            nodeData.name = newName;
-            const nodeEl = document.getElementById(selectedNodeId);
-            if (nodeEl) {
-              nodeEl.dataset.linkData = JSON.stringify(nodeData.linkData);
-              nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
-            }
-          } else if (!nodeData.fileData) {
-            // Apply text content changes
-            const currentHtmlContent = nodeInputArea.innerHTML;
-            const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
-            
-            // Update node data
-            nodeData.contentHtml = currentHtmlContent;
-            nodeData.contentText = currentTextContent;
-            nodeData.name = newName;
-
-            // Update node display
-            const nodeElement = document.getElementById(selectedNodeId);
-            if (nodeElement) {
-              nodeElement.dataset.contentHtml = currentHtmlContent;
-              nodeElement.dataset.contentText = currentTextContent;
-              nodeElement.textContent = newName;
-            }
-          } else {
-            // Update only the name for nodes with files
-            nodeData.name = newName;
+          if (pendingChanges?.fileData) {
+            // Apply pending file changes
+            nodeData.fileData = pendingChanges.fileData;
+            nodeData.linkData = null;
+            nodeData.contentHtml = '';
             const nodeEl = document.getElementById(selectedNodeId);
             if (nodeEl) {
               let fileIcon = '';
@@ -901,13 +576,62 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
               }
               nodeEl.innerHTML = fileIcon + escapeHTML(newName);
             }
+          } else if (fileViewerArea.style.display === "block" && fileViewerArea.querySelector('.link-input-area')) {
+            // Handle saving link data
+            const linkUrlInput = document.getElementById('linkUrlInput');
+            const linkTextInput = document.getElementById('linkTextInput');
+            
+            if (linkUrlInput && linkTextInput) {
+              const url = linkUrlInput.value.trim();
+              const text = linkTextInput.value.trim();
+              
+              if (url) {
+                nodeData.linkData = {
+                  url: url,
+                  text: text || url
+                };
+                nodeData.fileData = null;
+                nodeData.contentHtml = '';
+                nodeData.name = newName;
+                
+                const nodeEl = document.getElementById(selectedNodeId);
+                if (nodeEl) {
+                  nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
+                }
+              }
+            }
+          } else {
+            // Apply text content changes
+            const currentHtmlContent = nodeInputArea.innerHTML;
+            const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+            
+            // Update node data
+            nodeData.contentHtml = currentHtmlContent;
+            nodeData.contentText = currentTextContent;
+            nodeData.name = newName;
+            nodeData.fileData = null;
+            nodeData.linkData = null;
+
+            // Update node display
+            const nodeElement = document.getElementById(selectedNodeId);
+            if (nodeElement) {
+              nodeElement.dataset.contentHtml = currentHtmlContent;
+              nodeElement.dataset.contentText = currentTextContent;
+              nodeElement.textContent = newName;
+            }
           }
+          
+          // Clear pending changes after saving
+          pendingChanges = null;
         }
       } else {
+        // Handle new node creation
         const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
         const currentHtmlContent = nodeInputArea.innerHTML;
         if (currentTextContent.trim() || currentHtmlContent.trim()) {
-          addNode("New Node", 70, 70, "#FFFFE0", currentHtmlContent);
+          const nodeData = addNode("New Node", 70, 70, "#FFFFE0");
+          nodeData.contentHtml = currentHtmlContent;
+          nodeData.contentText = currentTextContent;
         }
       }
     });
@@ -939,19 +663,8 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
   // Connect Nodes Button
   if (connectNodesButton) {
     connectNodesButton.addEventListener("click", () => {
-      isConnectionMode = !isConnectionMode;
+      isConnectionMode = true;
       connectionSourceNodeId = null;
-      connectNodesButton.classList.toggle('active');
-      
-      // Remove any existing connection source highlighting
-      document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
-      
-      // Update button text based on mode
-      if (isConnectionMode) {
-        connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
-      } else {
-        connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Connect Nodes';
-      }
     });
   }
 
@@ -1164,6 +877,11 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
 
     nodeIdCounter = Math.max(nodeIdCounter, maxIdNum);
 
+    const lapTrinhWebNode = nodes.find((n) => n.id === "node-lap-trinh-web");
+    if (lapTrinhWebNode) {
+      lapTrinhWebNode.connections = ["node-oop", "node-csdl", "node-new", "node-uiux"];
+    }
+
     if (nodes.length === 0) {
       editorTitle.textContent = "New node";
       nodeInputArea.innerHTML = "";
@@ -1195,9 +913,6 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
   initializeStaticNodes();
   updateConnections();
   centerView(); // Center the view after initialization
-
-  // Hide editor pane initially since no node is selected
-  document.querySelector('.editor-pane').classList.add('hidden');
 
   // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
@@ -1367,46 +1082,113 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     });
   }
 
-  // Add real-time link preview functionality
-  function updateLinkPreview() {
-    const url = linkUrlInput.value.trim();
-    const description = linkDescriptionInput.value.trim();
+  // ===== Content Type Management =====
+  function switchContentType(type) {
+    nodeInputArea.style.display = type === 'text' ? 'block' : 'none';
+    fileViewerArea.style.display = type === 'file' ? 'block' : 'none';
+    linkInputArea.style.display = type === 'link' ? 'block' : 'none';
     
-    if (url) {
-      // Ensure URL has protocol
-      const fullUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
-      previewLink.href = fullUrl;
-      previewLink.textContent = url;
-      previewDescription.textContent = description;
-      linkPreview.style.display = 'block';
-    } else {
-      linkPreview.style.display = 'none';
+    // Update toolbar buttons visibility
+    const toolbarButtons = editorToolbar.querySelectorAll('button');
+    toolbarButtons.forEach(button => {
+      if (button.id === 'uploadFileToolbarButton') {
+        button.style.display = type === 'file' ? 'inline-block' : 'none';
+      } else if (button.dataset.command) {
+        button.style.display = type === 'text' ? 'inline-block' : 'none';
+      }
+    });
+
+    // Don't clear content when switching types if we have a selected node
+    if (selectedNodeId) {
+      const nodeData = nodes.find((n) => n.id === selectedNodeId);
+      if (nodeData) {
+        if (type === 'text') {
+          nodeInputArea.innerHTML = nodeData.contentHtml || '';
+        } else if (type === 'file' && nodeData.fileData) {
+          fileViewerArea.innerHTML = '';
+          // Create a new URL for this specific node's file
+          const fileUrl = nodeData.fileData.url;
+          if (nodeData.fileData.type.startsWith('image/')) {
+            fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
+          } else if (nodeData.fileData.type === 'application/pdf') {
+            fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
+          } else if (nodeData.fileData.type.startsWith('video/')) {
+            fileViewerArea.innerHTML = `
+              <video controls style="max-width: 100%; max-height: 100%;">
+                <source src="${fileUrl}" type="${nodeData.fileData.type}">
+                Your browser does not support the video tag.
+              </video>`;
+          } else if (nodeData.fileData.type.startsWith('audio/')) {
+            fileViewerArea.innerHTML = `
+              <audio controls style="width: 100%; margin: 20px 0;">
+                <source src="${fileUrl}" type="${nodeData.fileData.type}">
+                Your browser does not support the audio tag.
+              </audio>`;
+          }
+        } else if (type === 'link' && nodeData.linkData) {
+          linkUrlInput.value = nodeData.linkData.url || '';
+          linkTextInput.value = nodeData.linkData.text || '';
+        }
+      }
     }
   }
 
-  // Add input event listeners for real-time preview
-  if (linkUrlInput) {
-    linkUrlInput.addEventListener('input', updateLinkPreview);
+  if (contentTypeSelector) {
+    contentTypeSelector.addEventListener('change', (e) => {
+      const selectedType = e.target.value;
+      switchContentType(selectedType);
+      
+      // If switching to file type and no file is selected, trigger file input
+      if (selectedType === 'file' && !selectedNodeId) {
+        nodeFileInput.click();
+      }
+    });
   }
-  if (linkDescriptionInput) {
-    linkDescriptionInput.addEventListener('input', updateLinkPreview);
+
+  // Add function to center view on a specific position
+  function centerViewOn(x, y) {
+    const canvasPane = document.querySelector('.canvas-pane');
+    const paneRect = canvasPane.getBoundingClientRect();
+    
+    // Calculate the pan offset needed to center the view
+    panOffsetX = -(x - paneRect.width / (2 * currentZoom));
+    panOffsetY = -(y - paneRect.height / (2 * currentZoom));
+    
+    // Apply the transform
+    mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
+    updateMinimap();
+  }
+
+  // Add event listener for the Add Link button
+  const addLinkButton = document.getElementById("addLinkButton");
+  if (addLinkButton) {
+    addLinkButton.addEventListener("click", () => {
+      if (selectedNodeId) {
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          // Switch to link mode without clearing existing data
+          loadNodeInEditor(selectedNodeId);
+          
+          // Show link input fields and preview
+          const linkInputArea = document.createElement('div');
+          linkInputArea.className = 'link-input-area';
+          linkInputArea.innerHTML = `
+            <input type="url" id="linkUrlInput" placeholder="Enter URL" value="${nodeData.linkData?.url || ''}">
+            <input type="text" id="linkTextInput" placeholder="Enter link text" value="${nodeData.linkData?.text || ''}">
+            ${nodeData.linkData?.url ? `
+              <div class="link-preview">
+                <a href="${nodeData.linkData.url}" target="_blank" class="preview-link">
+                  <i class="fas fa-external-link-alt"></i> ${nodeData.linkData.text || nodeData.linkData.url}
+                </a>
+              </div>
+            ` : ''}
+          `;
+          fileViewerArea.innerHTML = '';
+          fileViewerArea.appendChild(linkInputArea);
+          fileViewerArea.style.display = "block";
+          nodeInputArea.style.display = "none";
+        }
+      }
+    });
   }
 });
-
-document.addEventListener("DOMContentLoaded", function () {
-  document.addEventListener("click", function (e) {
-    const popup = document.getElementById("linePopup");
-    if (!popup) return;
-
-    const isVisible = getComputedStyle(popup).display !== "none";
-
-    if (isVisible && !popup.contains(e.target)) {
-      popup.style.display = "none";
-      document.querySelectorAll(".connector-line").forEach((line) =>
-      line.classList.remove("active-line")
-    );
-    }
-  });
-});
-
-
