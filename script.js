@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
     const contentText = new DOMParser().parseFromString(defaultHtml, "text/html").body.textContent || "";
-    
+    const shape = document.getElementById('nodeShapeSelect')?.value || 'rectangle';
     const newNodeData = {
       id: `node-generated-${nodeIdCounter}`,
       name: name,
