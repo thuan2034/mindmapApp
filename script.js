@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorPane = document.querySelector(".editor-pane");
   const switchToTextButton = document.getElementById("switchToTextButton");
   const switchToFileButton = document.getElementById("switchToFileButton");
+  const shapeSelector = document.querySelector('.shape-selector');
+  const nodeColorPicker = document.getElementById("nodeColorPicker");
+const colorPresets = document.querySelectorAll(".color-preset");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -45,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let panOffsetX = 0;
   let panOffsetY = 0;
   let pendingChanges = null; // Store pending changes before save
-
+  let selectedShape = 'rectangle';
   // ===== Resizable Divider Functionality =====
   let isResizing = false;
   let startX;
@@ -139,12 +142,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (nodeData.linkData) {
       nodeDiv.dataset.linkData = JSON.stringify(nodeData.linkData);
     }
-
+    if (nodeData.shape) {
+      nodeDiv.classList.add(nodeData.shape);
+  }
     nodeDiv.addEventListener("mousedown", onNodeMouseDown);
     return nodeDiv;
   }
 
-  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null) {
+  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null,shape = 'rectangle') {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
     const contentText = new DOMParser().parseFromString(defaultHtml, "text/html").body.textContent || "";
@@ -159,7 +164,8 @@ document.addEventListener("DOMContentLoaded", () => {
       color: color,
       connections: [],
       fileData: fileData,
-      linkData: linkData
+      linkData: linkData,
+      shape :shape
     };
     
     nodes.push(newNodeData);
@@ -201,7 +207,18 @@ document.addEventListener("DOMContentLoaded", () => {
       uploadFileToolbarButton.style.display = "none";
       switchToTextButton.style.display = "none";
       switchToFileButton.style.display = "none";
-      
+      if (nodeData.color) {
+        nodeColorPicker.value = nodeData.color;
+    }
+      if (nodeData.shape) {
+        shapeSelector.querySelectorAll('button').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.shape === nodeData.shape) {
+                btn.classList.add('active');
+                selectedShape = nodeData.shape;
+            }
+        });
+    }
       if (nodeData.fileData) {
         fileViewerArea.style.display = "block";
         switchToTextButton.style.display = "inline-block";
@@ -322,6 +339,59 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+// Thêm event listener cho shape selector
+shapeSelector.addEventListener('click', (e) => {
+  const button = e.target.closest('button[data-shape]');
+  if (button && selectedNodeId) {
+      shapeSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      selectedShape = button.dataset.shape;
+      
+      const nodeElement = document.getElementById(selectedNodeId);
+      if (nodeElement) {
+          // Xóa tất cả các class hình dạng cũ
+          nodeElement.classList.remove(
+              'circle', 'diamond', 'hexagon', 'rounded'
+          );
+          
+          // Thêm class mới
+          if (selectedShape !== 'rectangle') {
+              nodeElement.classList.add(selectedShape);
+          }
+          
+          // Cập nhật vào node data
+          const nodeData = nodes.find(n => n.id === selectedNodeId);
+          if (nodeData) {
+              nodeData.shape = selectedShape;
+          }
+      }
+  }
+});
+// Thêm event listeners
+nodeColorPicker.addEventListener("input", (e) => {
+  updateNodeColor(e.target.value);
+});
+
+colorPresets.forEach(preset => {
+  preset.addEventListener("click", (e) => {
+      const color = e.target.dataset.color;
+      nodeColorPicker.value = color;
+      updateNodeColor(color);
+  });
+});
+
+// Hàm cập nhật màu node
+function updateNodeColor(color) {
+  if (!selectedNodeId) return;
+  
+  const nodeElement = document.getElementById(selectedNodeId);
+  const nodeData = nodes.find(n => n.id === selectedNodeId);
+  
+  if (nodeElement && nodeData) {
+      nodeElement.style.backgroundColor = color;
+      nodeData.color = color;
+  }
+}
 
   // ===== Drag and Drop Handlers =====
   function onNodeMouseDown(e) {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+
 <body>
     <div class="app-container">
         <nav class="sidebar">
@@ -30,7 +32,8 @@
                 </div>
             </div>
             <div class="user-actions">
-                <button class="action-btn notification-btn"><i class="fas fa-bell"></i><span class="notification-dot"></span></button>
+                <button class="action-btn notification-btn"><i class="fas fa-bell"></i><span
+                        class="notification-dot"></span></button>
                 <div class="user-profile">
                     <img src="image\frieren.jfif" alt="User Avatar" class="user-avatar"> <span>User</span>
                     <i class="fas fa-chevron-down"></i>
@@ -38,7 +41,7 @@
             </div>
         </nav>
         <div class="main-wrapper">
-          
+
             <main class="content-area">
                 <section class="editor-pane">
                     <div class="editor-header">
@@ -53,22 +56,50 @@
                         <button title="Bold" data-command="bold"><i class="fas fa-bold"></i></button>
                         <button title="Italic" data-command="italic"><i class="fas fa-italic"></i></button>
                         <button title="Underline" data-command="underline"><i class="fas fa-underline"></i></button>
-                        <button title="Strikethrough" data-command="strikethrough"><i class="fas fa-strikethrough"></i></button>
+                        <button title="Strikethrough" data-command="strikethrough"><i
+                                class="fas fa-strikethrough"></i></button>
                         <div class="toolbar-divider"></div>
-                        <button title="Unordered List" data-command="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
-                        <button title="Ordered List" data-command="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                        <button title="Unordered List" data-command="insertUnorderedList"><i
+                                class="fas fa-list-ul"></i></button>
+                        <button title="Ordered List" data-command="insertOrderedList"><i
+                                class="fas fa-list-ol"></i></button>
                         <button title="Indent List" data-command="indent"><i class="fas fa-indent"></i></button>
                         <button title="Outdent List" data-command="outdent"><i class="fas fa-outdent"></i></button>
                         <div class="toolbar-divider"></div>
                         <button title="Align Left" data-command="justifyLeft"><i class="fas fa-align-left"></i></button>
-                        <button title="Align Center" data-command="justifyCenter"><i class="fas fa-align-center"></i></button>
-                        <button title="Align Right" data-command="justifyRight"><i class="fas fa-align-right"></i></button>
+                        <button title="Align Center" data-command="justifyCenter"><i
+                                class="fas fa-align-center"></i></button>
+                        <button title="Align Right" data-command="justifyRight"><i
+                                class="fas fa-align-right"></i></button>
                         <button title="Justify" data-command="justifyFull"><i class="fas fa-align-justify"></i></button>
-                        <button title="Upload File" id="uploadFileToolbarButton"><i class="fas fa-file-upload"></i></button>
-                        <input type="file" id="nodeFileInput" accept="image/*,application/pdf,video/*,audio/*" style="display: none;">
+                        <button title="Upload File" id="uploadFileToolbarButton"><i
+                                class="fas fa-file-upload"></i></button>
+                        <input type="file" id="nodeFileInput" accept="image/*,application/pdf,video/*,audio/*"
+                            style="display: none;">
                         <button title="Add Link" id="addLinkButton"><i class="fas fa-link"></i></button>
-                        <button title="Switch to Text" id="switchToTextButton" style="display: none;"><i class="fas fa-font"></i></button>
-                        <button title="Switch to File" id="switchToFileButton" style="display: none;"><i class="fas fa-file-upload"></i></button>
+                        <button title="Switch to Text" id="switchToTextButton" style="display: none;"><i
+                                class="fas fa-font"></i></button>
+                        <button title="Switch to File" id="switchToFileButton" style="display: none;"><i
+                                class="fas fa-file-upload"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <div class="shape-selector">
+                            <button title="Hình chữ nhật" data-shape="rectangle" class="active"><i
+                                    class="fas fa-square"></i></button>
+                            <button title="Hình tròn" data-shape="circle"><i class="fas fa-circle"></i></button>
+                            <button title="Hình thoi" data-shape="diamond"><i class="fas fa-diamond"></i></button>
+                            <button title="Lục giác" data-shape="hexagon"><i class="fas fa-hexagon"></i></button>
+                            <button title="Bo tròn" data-shape="rounded"><i class="fas fa-square-rounded"></i></button>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="color-picker">
+                            <input type="color" id="nodeColorPicker" title="Chọn màu node">
+                            <div class="color-presets">
+                                <button class="color-preset" style="background: #FFFFE0" data-color="#FFFFE0"></button>
+                                <button class="color-preset" style="background: #FFC0CB" data-color="#FFC0CB"></button>
+                                <button class="color-preset" style="background: #E0FFFF" data-color="#E0FFFF"></button>
+                                <button class="color-preset" style="background: #98FB98" data-color="#98FB98"></button>
+                            </div>
+                        </div>
                     </div>
                     <div class="editor-content">
                         <label for="node-input-area" class="sr-only">Nội dung</label>
@@ -76,23 +107,30 @@
                         <div id="file-viewer-area" style="display: none;"></div>
                         <div id="link-input-area" style="display: none;">
                             <input type="url" id="link-url-input" placeholder="Enter URL..." class="link-url-input">
-                            <textarea id="link-description-input" placeholder="Enter link description..." class="link-description-input"></textarea>
+                            <textarea id="link-description-input" placeholder="Enter link description..."
+                                class="link-description-input"></textarea>
                             <div id="link-preview" class="link-preview" style="display: none;">
                                 <a href="#" target="_blank" id="preview-link">Link Preview</a>
                                 <div id="preview-description" class="link-description"></div>
                             </div>
                         </div>
                     </div>
+
                     <button class="save-btn">Lưu</button>
                 </section>
                 <div class="resizable-divider"></div>
                 <section class="canvas-pane">
                     <div class="mind-map-container" id="mindMapContainer">
-                        <div class="node" id="node-lap-trinh-web" style="top: 200px; left: 350px; background-color: #FFC0CB;">Lập trình web</div>
-                        <div class="node" id="node-oop" style="top: 100px; left: 150px; background-color: #FFFFE0;">OOP</div>
-                        <div class="node" id="node-csdl" style="top: 100px; left: 550px; background-color: #FFFFE0;">CSDL</div>
-                        <div class="node" id="node-new" style="top: 300px; left: 150px; background-color: #FFFFE0;">New node</div>
-                        <div class="node" id="node-uiux" style="top: 300px; left: 550px; background-color: #FFFFE0;">UI/UX</div>
+                        <div class="node" id="node-lap-trinh-web"
+                            style="top: 200px; left: 350px; background-color: #FFC0CB;">Lập trình web</div>
+                        <div class="node" id="node-oop" style="top: 100px; left: 150px; background-color: #FFFFE0;">OOP
+                        </div>
+                        <div class="node" id="node-csdl" style="top: 100px; left: 550px; background-color: #FFFFE0;">
+                            CSDL</div>
+                        <div class="node" id="node-new" style="top: 300px; left: 150px; background-color: #FFFFE0;">New
+                            node</div>
+                        <div class="node" id="node-uiux" style="top: 300px; left: 550px; background-color: #FFFFE0;">
+                            UI/UX</div>
                     </div>
                     <div class="zoom-controls">
                         <button id="zoomInBtn" title="Zoom In"><i class="fas fa-plus"></i></button>
@@ -103,11 +141,13 @@
                         <div class="minimap-viewport"></div>
                     </div>
                     <button id="addNodeButton" class="add-node-btn-canvas" title="Add new node to canvas">+</button>
-                    <button id="connectNodesButton" class="connect-nodes-btn-canvas" title="Connect nodes"><i class="fas fa-project-diagram"></i> Connect</button>
+                    <button id="connectNodesButton" class="connect-nodes-btn-canvas" title="Connect nodes"><i
+                            class="fas fa-project-diagram"></i> Connect</button>
                 </section>
             </main>
         </div>
     </div>
     <script src="script.js"></script>
 </body>
+
 </html>
