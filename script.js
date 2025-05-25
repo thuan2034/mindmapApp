@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const linkInputArea = document.getElementById("link-input-area");
   const linkUrlInput = document.getElementById("link-url-input");
   const linkDescriptionInput = document.getElementById("link-description-input");
+  const linkCategoryInput = document.getElementById("link-category-input");
   const linkPreview = document.getElementById("link-preview");
   const previewLink = document.getElementById("preview-link");
   const previewDescription = document.getElementById("preview-description");
@@ -145,6 +146,9 @@ const colorPresets = document.querySelectorAll(".color-preset");
     if (nodeData.shape) {
       nodeDiv.classList.add(nodeData.shape);
   }
+  if (nodeData.linkData?.category) {
+  nodeDiv.title = nodeData.linkData.category;
+}
     nodeDiv.addEventListener("mousedown", onNodeMouseDown);
     return nodeDiv;
   }
@@ -247,6 +251,7 @@ const colorPresets = document.querySelectorAll(".color-preset");
         switchToFileButton.style.display = "inline-block";
         linkUrlInput.value = nodeData.linkData.url;
         linkDescriptionInput.value = nodeData.linkData.description;
+        linkCategoryInput.value = nodeData.linkData.category || "";
         updateLinkPreview();
       } else {
         nodeInputArea.style.display = "block";
@@ -824,7 +829,8 @@ function updateNodeColor(color) {
               nodeData.fileData = null;
               nodeData.linkData = {
                 url: linkUrlInput.value.trim(),
-                description: linkDescriptionInput.value.trim()
+                description: linkDescriptionInput.value.trim(),
+                category: linkCategoryInput.value.trim()
               };
               nodeData.name = newName;
               const nodeEl = document.getElementById(selectedNodeId);
@@ -839,6 +845,7 @@ function updateNodeColor(color) {
             // Update link data
             nodeData.linkData.url = linkUrlInput.value.trim();
             nodeData.linkData.description = linkDescriptionInput.value.trim();
+            nodeData.linkData.category = linkCategoryInput.value.trim();
             nodeData.name = newName;
             const nodeEl = document.getElementById(selectedNodeId);
             if (nodeEl) {

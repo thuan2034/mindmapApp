@@ -490,6 +490,22 @@ body, html {
     box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
 }
 
+.link-category-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: #fff;
+    appearance: none;
+}
+
+.link-category-input:focus {
+    outline: none;
+    border-color: #d6336c;
+    box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+}
+
 /* Link preview styles */
 .link-preview {
     display: flex;
