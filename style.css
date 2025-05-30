@@ -1062,3 +1062,12 @@ body, html {
   pointer-events: none;
   user-select: none;
 }
+
+#nodePlusButton {
+  color: white;
+  border-radius: 50%;
+  padding: 5px 10px;
+  font-size: 14px;
+  position: absolute;
+}
+

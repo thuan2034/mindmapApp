@@ -251,6 +251,10 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
     }
   }
 
+  function updateNodeText(nodeDiv, nodeData) {
+    const displayText = nodeData.name || "Node";
+    nodeDiv.innerHTML = escapeHTML(displayText);
+  }
 
   function loadNodeInEditor(nodeId) {
     const nodeData = nodes.find((n) => n.id === nodeId);
