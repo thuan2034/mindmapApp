@@ -92,6 +92,39 @@ document.getElementById("applyLineSettingsBtn").addEventListener("click", functi
   popup.style.display = "none";
   line.classList.remove("active-line");
 });
+
+document.getElementById("deleteConnectionBtn").addEventListener("click", function () {
+  const popup = document.getElementById("linePopup");
+  const lineId = popup.dataset.activeLineId;
+  if (!lineId) return;
+
+  const index = connections.findIndex((c) => c.id === lineId);
+  if (index === -1) return;
+
+  const connection = connections[index];
+  const { node1, node2 } = connection;
+
+  connections.splice(index, 1);
+
+  const node1Obj = nodes.find((n) => n.id === node1);
+  const node2Obj = nodes.find((n) => n.id === node2);
+
+  if (node1Obj && node2Obj) {
+    node1Obj.connections = node1Obj.connections.filter(id => id !== node2);
+    node2Obj.connections = node2Obj.connections.filter(id => id !== node1);
+  }
+
+  const lineEl = document.getElementById(lineId);
+  if (lineEl) lineEl.remove();
+
+  const labelEl = document.getElementById(connection.labelid);
+  if (labelEl) labelEl.remove();
+
+  popup.style.display = "none";
+  updateConnections();
+});
+
+
   function initResizableDivider() {
     const resizableDivider = document.querySelector(".resizable-divider");
     const editorPane = document.querySelector(".editor-pane");

@@ -959,6 +959,16 @@ body, html {
   cursor: pointer;
   width: 100%;
 }
+#deleteConnectionBtn {
+  background: #e90505;
+  color: white;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+  width: 100%;
+}
 
 #applyLineSettingsBtn:hover {
   background: #0056b3;
