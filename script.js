@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const shapeSelector = document.querySelector('.shape-selector');
   const nodeColorPicker = document.getElementById("nodeColorPicker");
 const colorPresets = document.querySelectorAll(".color-preset");
+ const plusBtn = document.getElementById("nodePlusButton");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -496,6 +497,42 @@ function updateNodeColor(color) {
 }
 
   // ===== Drag and Drop Handlers =====
+function updateNodePlusButtonPosition() {
+  const plusBtn = document.getElementById("nodePlusButton");
+  if (!activeDraggableNode || !plusBtn || isConnectionMode) {
+    plusBtn.style.display = "none";
+    return;
+  }
+
+ 
+  plusBtn.style.display = "block";
+  plusBtn.style.left = "-9999px";
+  plusBtn.style.top = "-9999px";
+
+  const nodeLeft = parseFloat(activeDraggableNode.style.left);
+  const nodeTop = parseFloat(activeDraggableNode.style.top);
+  const nodeWidth = activeDraggableNode.offsetWidth;
+  const btnWidth = plusBtn.offsetWidth;
+  const btnHeight = plusBtn.offsetHeight;
+
+  
+  const btnLeft = nodeLeft + nodeWidth / 2 - btnWidth / 2;
+  const btnTop = nodeTop - btnHeight - 5;
+
+  
+  plusBtn.style.left = `${btnLeft}px`;
+  plusBtn.style.top = `${btnTop}px`;
+}
+
+
+plusBtn.addEventListener("click", (e) => {
+  e.stopPropagation();  
+  isConnectionMode = true; 
+  connectNodesButton.classList.add("active");
+  connectNodesButton.innerHTML = "Click nodes to connect";
+  plusBtn.style.display = "none";
+});
+
   function onNodeMouseDown(e) {
     if (e.button !== 0) return;
 
@@ -517,6 +554,7 @@ function updateNodeColor(color) {
 
     document.addEventListener("mousemove", onNodeMouseMove);
     document.addEventListener("mouseup", onNodeMouseUp);
+    updateNodePlusButtonPosition();
   }
 
   function onNodeMouseMove(e) {
@@ -551,6 +589,7 @@ function updateNodeColor(color) {
       nodeData.y = newY;
     }
     updateConnections();
+    updateNodePlusButtonPosition();
   }
 
   function onNodeMouseUp(e) {
@@ -583,6 +622,7 @@ function updateNodeColor(color) {
           }
         } else {
           selectNode(activeDraggableNode.id);
+          updateNodePlusButtonPosition();
         }
       }
       activeDraggableNode.classList.remove("dragging");
@@ -590,6 +630,7 @@ function updateNodeColor(color) {
     }
 
     isDragging = false;
+    connectionSourceNodeId = activeDraggableNode.id;
     activeDraggableNode = null;
     document.removeEventListener("mousemove", onNodeMouseMove);
     document.removeEventListener("mouseup", onNodeMouseUp);
