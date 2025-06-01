@@ -1124,6 +1124,7 @@ plusBtn.addEventListener("click", (e) => {
       if (selectedNodeId) {
         if (confirm("Are you sure you want to delete this node?")) {
           deleteNode(selectedNodeId);
+          updateNodePlusButtonPosition();
         }
       }
     });
@@ -1270,71 +1271,69 @@ plusBtn.addEventListener("click", (e) => {
   });
 
   // ===== Initialization =====
-  function initializeStaticNodes() {
-    const staticNodeElements = mindMapContainer.querySelectorAll('.node:not([id^="node-generated-"])');
-    let maxIdNum = 0;
+async function initializeStaticNodes() {
+  try {
+    const res = await fetch("initial-mindmap.json");
+    const state = await res.json();
 
-    // Calculate center of the canvas
+    nodes = [];
+    connections = [];
+    nodeIdCounter = 0;
+    connectionIdCounter = 0;
+
     const centerX = mindMapContainer.offsetWidth / 2;
     const centerY = mindMapContainer.offsetHeight / 2;
 
-    staticNodeElements.forEach((nodeEl) => {
-      if (nodes.find((n) => n.id === nodeEl.id)) return;
-
-      const idParts = nodeEl.id.split("-");
-      const numPart = parseInt(idParts[idParts.length - 1], 10);
-      if (!isNaN(numPart)) maxIdNum = Math.max(maxIdNum, numPart);
-
-      const nameText = nodeEl.textContent.trim();
-      const initialColor = nodeEl.style.backgroundColor || "#FFFFE0";
-      
-      // Calculate position relative to center
-      let x, y;
-      if (nodeEl.id === "node-lap-trinh-web") {
-        x = centerX;
-        y = centerY;
-      } else if (nodeEl.id === "node-oop") {
-        x = centerX - 200;
-        y = centerY - 100;
-      } else if (nodeEl.id === "node-csdl") {
-        x = centerX + 200;
-        y = centerY - 100;
-      } else if (nodeEl.id === "node-new") {
-        x = centerX - 200;
-        y = centerY + 100;
-      } else if (nodeEl.id === "node-uiux") {
-        x = centerX + 200;
-        y = centerY + 100;
-      }
-
-      const newNodeData = {
-        id: nodeEl.id,
-        name: nameText,
-        contentHtml: escapeHTML(nameText),
-        contentText: nameText,
-        x: x,
-        y: y,
-        color: initialColor,
-        connections: [],
-      };
-      nodes.push(newNodeData);
-      nodeEl.dataset.contentHtml = newNodeData.contentHtml;
-      nodeEl.dataset.contentText = newNodeData.contentText;
-      nodeEl.style.left = x + "px";
-      nodeEl.style.top = y + "px";
-      nodeEl.addEventListener("mousedown", onNodeMouseDown);
+    // Add nodes from JSON
+    state.nodes.forEach((node) => {
+      const newNode = addNode(
+        node.name,
+        node.x !== undefined ? node.x : centerX,
+        node.y !== undefined ? node.y : centerY,
+        node.color || "#FFFFE0",
+        node.contentHtml || "",
+        node.fileData || null,
+        node.linkData || null,
+        node.shape || "rectangle"
+      );
+      newNode.id = node.id; // override generated ID to match saved one
     });
 
-    nodeIdCounter = Math.max(nodeIdCounter, maxIdNum);
+    // Sync nodeIdCounter with max ID
+    const maxNodeId = state.nodes.reduce((max, n) => {
+      const match = n.id?.match(/node-generated-(\d+)/);
+      return match ? Math.max(max, parseInt(match[1], 10)) : max;
+    }, 0);
+    nodeIdCounter = maxNodeId;
 
-    if (nodes.length === 0) {
-      editorTitle.textContent = "New node";
-      nodeInputArea.innerHTML = "";
-      nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
-      selectedNodeId = null;
-    }
+    // Add connections from JSON
+    state.connections.forEach((conn) => {
+      const newConn = addConnection(
+        conn.label,
+        conn.color,
+        conn.size,
+        conn.node1,
+        conn.node2
+      );
+      newConn.id = conn.id;
+      newConn.labelid = conn.labelid;
+    });
+
+    // Sync connectionIdCounter with max ID
+    const maxConnId = state.connections.reduce((max, c) => {
+      const match = c.id?.match(/connection-generated-(\d+)/);
+      return match ? Math.max(max, parseInt(match[1], 10)) : max;
+    }, 0);
+    connectionIdCounter = maxConnId;
+
+    updateConnections(); // Redraw lines
     updateNodeSelectionVisual();
+
+  } catch (err) {
+    console.warn("Failed to load initial mindmap:", err);
   }
+}
+
 
   // Function to center the view on the canvas
   function centerView() {

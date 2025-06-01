@@ -1,0 +1,230 @@
+{
+  "nodes": [
+    {
+      "id": "node-generated-1",
+      "name": "Cấu trúc dữ liệu",
+      "contentHtml": "Cấu trúc dữ liệu",
+      "contentText": "Cấu trúc dữ liệu",
+      "x": 600,
+      "y": 400,
+      "color": "#FFD700",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-2",
+      "name": "Thuật toán ứng dụng",
+      "contentHtml": "Thuật toán ứng dụng",
+      "contentText": "Thuật toán ứng dụng",
+      "x": 1000,
+      "y": 400,
+      "color": "#90EE90",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-3",
+      "name": "Mảng (Array)",
+      "contentHtml": "Mảng (Array)",
+      "contentText": "Mảng (Array)",
+      "x": 450,
+      "y": 250,
+      "color": "#FFFFE0",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-4",
+      "name": "Danh sách liên kết",
+      "contentHtml": "Danh sách liên kết",
+      "contentText": "Danh sách liên kết",
+      "x": 450,
+      "y": 550,
+      "color": "#FFFFE0",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-5",
+      "name": "Ngăn xếp (Stack)",
+      "contentHtml": "Ngăn xếp (Stack)",
+      "contentText": "Ngăn xếp (Stack)",
+      "x": 300,
+      "y": 400,
+      "color": "#FFDAB9",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-6",
+      "name": "Hàng đợi (Queue)",
+      "contentHtml": "Hàng đợi (Queue)",
+      "contentText": "Hàng đợi (Queue)",
+      "x": 300,
+      "y": 600,
+      "color": "#FFDAB9",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-7",
+      "name": "Cây nhị phân",
+      "contentHtml": "Cây nhị phân",
+      "contentText": "Cây nhị phân",
+      "x": 750,
+      "y": 250,
+      "color": "#E6E6FA",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-8",
+      "name": "Đồ thị",
+      "contentHtml": "Đồ thị",
+      "contentText": "Đồ thị",
+      "x": 750,
+      "y": 550,
+      "color": "#E6E6FA",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-9",
+      "name": "Tìm kiếm nhị phân",
+      "contentHtml": "Tìm kiếm nhị phân",
+      "contentText": "Tìm kiếm nhị phân",
+      "x": 1150,
+      "y": 250,
+      "color": "#ADD8E6",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-10",
+      "name": "Sắp xếp nhanh",
+      "contentHtml": "Sắp xếp nhanh",
+      "contentText": "Sắp xếp nhanh",
+      "x": 1150,
+      "y": 550,
+      "color": "#ADD8E6",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-11",
+      "name": "Dijkstra",
+      "contentHtml": "Dijkstra",
+      "contentText": "Dijkstra",
+      "x": 1300,
+      "y": 400,
+      "color": "#87CEFA",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-12",
+      "name": "Quy hoạch động",
+      "contentHtml": "Quy hoạch động",
+      "contentText": "Quy hoạch động",
+      "x": 1000,
+      "y": 600,
+      "color": "#F0E68C",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-13",
+      "name": "Thuật toán tham lam",
+      "contentHtml": "Thuật toán tham lam",
+      "contentText": "Thuật toán tham lam",
+      "x": 1000,
+      "y": 200,
+      "color": "#F0E68C",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-14",
+      "name": "Backtracking",
+      "contentHtml": "Backtracking",
+      "contentText": "Backtracking",
+      "x": 850,
+      "y": 100,
+      "color": "#F5DEB3",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+
+    {
+      "id": "node-generated-15",
+      "name": "Ứng dụng AI",
+      "contentHtml": "Ứng dụng AI",
+      "contentText": "Ứng dụng AI",
+      "x": 1150,
+      "y": 100,
+      "color": "#FFE4E1",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    }
+  ],
+
+  "connections": [
+    { "id": "connection-generated-1", "labelid": "label-for-1", "label": "Liên quan", "color": "#000000", "size": "15", "node1": "node-generated-1", "node2": "node-generated-2" },
+    { "id": "connection-generated-2", "labelid": "label-for-2", "label": "bao gồm", "color": "#888888", "size": "12", "node1": "node-generated-1", "node2": "node-generated-3" },
+    { "id": "connection-generated-3", "labelid": "label-for-3", "label": "bao gồm", "color": "#888888", "size": "12", "node1": "node-generated-1", "node2": "node-generated-4" },
+    { "id": "connection-generated-4", "labelid": "label-for-4", "label": "bao gồm", "color": "#888888", "size": "12", "node1": "node-generated-1", "node2": "node-generated-5" },
+    { "id": "connection-generated-5", "labelid": "label-for-5", "label": "bao gồm", "color": "#888888", "size": "12", "node1": "node-generated-1", "node2": "node-generated-6" },
+    { "id": "connection-generated-6", "labelid": "label-for-6", "label": "bao gồm", "color": "#888888", "size": "12", "node1": "node-generated-1", "node2": "node-generated-7" },
+    { "id": "connection-generated-7", "labelid": "label-for-7", "label": "bao gồm", "color": "#888888", "size": "12", "node1": "node-generated-1", "node2": "node-generated-8" },
+
+    { "id": "connection-generated-8", "labelid": "label-for-8", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-9" },
+    { "id": "connection-generated-9", "labelid": "label-for-9", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-10" },
+    { "id": "connection-generated-10", "labelid": "label-for-10", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-11" },
+    { "id": "connection-generated-11", "labelid": "label-for-11", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-12" },
+    { "id": "connection-generated-12", "labelid": "label-for-12", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-13" },
+    { "id": "connection-generated-13", "labelid": "label-for-13", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-14" },
+    { "id": "connection-generated-14", "labelid": "label-for-14", "label": "dùng", "color": "#00008B", "size": "12", "node1": "node-generated-2", "node2": "node-generated-15" }
+  ]
+}
