@@ -1124,6 +1124,7 @@ plusBtn.addEventListener("click", (e) => {
       if (selectedNodeId) {
         if (confirm("Are you sure you want to delete this node?")) {
           deleteNode(selectedNodeId);
+          updateNodePlusButtonPosition();
         }
       }
     });
