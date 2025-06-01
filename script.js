@@ -252,7 +252,7 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
   function addConnection(label = "label",color = "#FFFFE0",size = "15",node1Id,node2Id) {
     connectionIdCounter++;
     const newConnectionData = {
-      id: `node-generated-${connectionIdCounter}`,
+      id: `connection-generated-${connectionIdCounter}`,
       labelid: `label-for-${connectionIdCounter}`,
       label: label,
       color: color,
@@ -285,10 +285,7 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     }
   }
 
-  function updateNodeText(nodeDiv, nodeData) {
-    const displayText = nodeData.name || "Node";
-    nodeDiv.innerHTML = escapeHTML(displayText);
-  }
+
 
   function loadNodeInEditor(nodeId) {
     const nodeData = nodes.find((n) => n.id === nodeId);
@@ -623,6 +620,7 @@ plusBtn.addEventListener("click", (e) => {
     }
     updateConnections();
     updateNodePlusButtonPosition();
+    
   }
 
   function onNodeMouseUp(e) {
@@ -642,6 +640,7 @@ plusBtn.addEventListener("click", (e) => {
                 sourceNode.connections.push(targetNodeId);
                 targetNode.connections.push(connectionSourceNodeId);
                 addConnection("label","#000000","5",connectionSourceNodeId,targetNodeId)
+                
                 updateConnections();
               }
               
@@ -976,9 +975,7 @@ plusBtn.addEventListener("click", (e) => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
         const nodeDiv = document.getElementById(selectedNodeId);
-        if (nodeDiv) {
-          updateNodeText(nodeDiv, nodeData);
-        }
+
         if (nodeData) {
           const newName = editorTitle.textContent.trim();
           
