@@ -31,13 +31,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const shapeSelector = document.querySelector('.shape-selector');
   const nodeColorPicker = document.getElementById("nodeColorPicker");
 const colorPresets = document.querySelectorAll(".color-preset");
+ const plusBtn = document.getElementById("nodePlusButton");
 
   // ===== State Variables =====
   let isConnectionMode = false;
   let connectionSourceNodeId = null;
   let nodes = []; // Store node data (name, contentHtml, contentText, position, id, color, fileData, linkData)
+  let connections = [];
   let selectedNodeId = null;
+  let selectedConnectionId = null;
   let nodeIdCounter = 0;
+  let connectionIdCounter = 0;
   let isDragging = false;
   let activeDraggableNode = null;
   let dragOffsetX, dragOffsetY;
@@ -54,6 +58,72 @@ const colorPresets = document.querySelectorAll(".color-preset");
   let isResizing = false;
   let startX;
   let startWidth;
+
+document.getElementById("applyLineSettingsBtn").addEventListener("click", function () {
+  const popup = document.getElementById("linePopup");
+  const lineId = popup.dataset.activeLineId;
+  const curConnection = connections.find((n) => n.id === lineId);
+  const label = document.getElementById(curConnection.labelid);
+  const line = document.getElementById(lineId);
+  if (!line) return;
+
+  // Get values from inputs
+  const newColor = document.getElementById("lineColorInput").value;
+  const newThickness = document.getElementById("lineThicknessInput").value;
+  const newLabel = document.getElementById("lineLabelInput").value;
+
+  // Update line visually
+  line.setAttribute("stroke", newColor);
+  line.setAttribute("stroke-width", newThickness);
+
+  label.textContent = newLabel;
+
+  // Update the connection data
+  const connection = connections.find(
+    (c) => c.id === lineId 
+  );
+  if (connection) {
+    connection.color = newColor;
+    connection.label = newLabel;
+    connection.size = newThickness;
+  }
+
+  // Hide popup and remove glow
+  popup.style.display = "none";
+  line.classList.remove("active-line");
+});
+
+document.getElementById("deleteConnectionBtn").addEventListener("click", function () {
+  const popup = document.getElementById("linePopup");
+  const lineId = popup.dataset.activeLineId;
+  if (!lineId) return;
+
+  const index = connections.findIndex((c) => c.id === lineId);
+  if (index === -1) return;
+
+  const connection = connections[index];
+  const { node1, node2 } = connection;
+
+  connections.splice(index, 1);
+
+  const node1Obj = nodes.find((n) => n.id === node1);
+  const node2Obj = nodes.find((n) => n.id === node2);
+
+  if (node1Obj && node2Obj) {
+    node1Obj.connections = node1Obj.connections.filter(id => id !== node2);
+    node2Obj.connections = node2Obj.connections.filter(id => id !== node1);
+  }
+
+  const lineEl = document.getElementById(lineId);
+  if (lineEl) lineEl.remove();
+
+  const labelEl = document.getElementById(connection.labelid);
+  if (labelEl) labelEl.remove();
+
+  popup.style.display = "none";
+  updateConnections();
+});
+
 
   function initResizableDivider() {
     const resizableDivider = document.querySelector(".resizable-divider");
@@ -179,6 +249,23 @@ const colorPresets = document.querySelectorAll(".color-preset");
     return newNodeData;
   }
 
+  function addConnection(label = "label",color = "#FFFFE0",size = "15",node1Id,node2Id) {
+    connectionIdCounter++;
+    const newConnectionData = {
+      id: `node-generated-${connectionIdCounter}`,
+      labelid: `label-for-${connectionIdCounter}`,
+      label: label,
+      color: color,
+      size: size,
+      node1: node1Id, 
+      node2: node2Id,
+    };
+    
+    connections.push(newConnectionData);
+    selectedConnectionId=newConnectionData.id;
+    return newConnectionData;
+  }
+
   function selectNode(nodeId) {
     if (nodeId === selectedNodeId && nodeInputArea.innerHTML !== "") return;
     
@@ -198,12 +285,17 @@ const colorPresets = document.querySelectorAll(".color-preset");
     }
   }
 
+  function updateNodeText(nodeDiv, nodeData) {
+    const displayText = nodeData.name || "Node";
+    nodeDiv.innerHTML = escapeHTML(displayText);
+  }
+
   function loadNodeInEditor(nodeId) {
     const nodeData = nodes.find((n) => n.id === nodeId);
     if (nodeData) {
       selectedNodeId = nodeId;
       editorTitle.textContent = escapeHTML(nodeData.name) || "Edit Node";
-      
+
       // Hide all content areas first
       nodeInputArea.style.display = "none";
       fileViewerArea.style.display = "none";
@@ -309,12 +401,13 @@ const colorPresets = document.querySelectorAll(".color-preset");
   }
 
   // ===== Connection Management =====
-  function drawLine(node1Id, node2Id) {
-    const node1El = document.getElementById(node1Id);
-    const node2El = document.getElementById(node2Id);
+  function drawLine(connection) {
+    const node1El = document.getElementById(connection.node1);
+    const node2El = document.getElementById(connection.node2);
     if (!node1El || !node2El || !svgLinesContainer) return;
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.id = connection.id; 
     const x1 = node1El.offsetLeft + node1El.offsetWidth / 2;
     const y1 = node1El.offsetTop + node1El.offsetHeight / 2;
     const x2 = node2El.offsetLeft + node2El.offsetWidth / 2;
@@ -325,23 +418,61 @@ const colorPresets = document.querySelectorAll(".color-preset");
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
-    line.dataset.from = node1Id;
-    line.dataset.to = node2Id;
+    line.setAttribute("stroke", connection.color);           
+    line.setAttribute("stroke-width", connection.size);        
+    line.setAttribute("pointer-events", "visibleStroke");
+    
+    line.dataset.from = connection.node1;
+    line.dataset.to = connection.node2;
+
+      // Label logic
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    label.id = connection.labelid; 
+    label.setAttribute("x", midX);
+    label.setAttribute("y", midY - 15); 
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("class", "line-label");
+    label.setAttribute("font-size", "12px");
+    label.setAttribute("fill", "#000"); 
+    label.textContent = connection.label || "";
+
+    line.addEventListener("click", function (e) {
+    e.stopPropagation(); 
+
+
+    document.querySelectorAll(".connector-line").forEach((l) =>
+      l.classList.remove("active-line")
+    );
+    line.classList.add("active-line");
+
+    
+    const popup = document.getElementById("linePopup");
+    popup.style.left = e.pageX + "px";
+    popup.style.top = e.pageY + "px";
+    popup.style.display = "block";
+
+    
+    document.getElementById("lineColorInput").value = connection.color || "#000000";
+    document.getElementById("lineThicknessInput").value = parseInt(line.getAttribute("stroke-width")) || 2;
+    document.getElementById("lineLabelInput").value = connection.label || "";
+
+    
+    popup.dataset.activeLineId = connection.id;
+    popup.dataset.from = connection.node1;
+    popup.dataset.to = connection.node2;
+  });
 
     svgLinesContainer.appendChild(line);
+    svgLinesContainer.appendChild(label);
   }
 
   function updateConnections() {
     ensureSvgContainer();
     svgLinesContainer.innerHTML = "";
-    nodes.forEach((node) => {
-      if (node.connections) {
-        node.connections.forEach((targetId) => {
-          if (nodes.find((n) => n.id === targetId)) {
-            drawLine(node.id, targetId);
-          }
-        });
-      }
+    connections.forEach((connection) => {    
+            drawLine(connection);
     });
   }
 // Thêm event listener cho shape selector
@@ -399,6 +530,42 @@ function updateNodeColor(color) {
 }
 
   // ===== Drag and Drop Handlers =====
+function updateNodePlusButtonPosition() {
+  const plusBtn = document.getElementById("nodePlusButton");
+  if (!activeDraggableNode || !plusBtn || isConnectionMode) {
+    plusBtn.style.display = "none";
+    return;
+  }
+
+ 
+  plusBtn.style.display = "block";
+  plusBtn.style.left = "-9999px";
+  plusBtn.style.top = "-9999px";
+
+  const nodeLeft = parseFloat(activeDraggableNode.style.left);
+  const nodeTop = parseFloat(activeDraggableNode.style.top);
+  const nodeWidth = activeDraggableNode.offsetWidth;
+  const btnWidth = plusBtn.offsetWidth;
+  const btnHeight = plusBtn.offsetHeight;
+
+  
+  const btnLeft = nodeLeft + nodeWidth / 2 - btnWidth / 2;
+  const btnTop = nodeTop - btnHeight - 5;
+
+  
+  plusBtn.style.left = `${btnLeft}px`;
+  plusBtn.style.top = `${btnTop}px`;
+}
+
+
+plusBtn.addEventListener("click", (e) => {
+  e.stopPropagation();  
+  isConnectionMode = true; 
+  connectNodesButton.classList.add("active");
+  connectNodesButton.innerHTML = "Click nodes to connect";
+  plusBtn.style.display = "none";
+});
+
   function onNodeMouseDown(e) {
     if (e.button !== 0) return;
 
@@ -420,6 +587,7 @@ function updateNodeColor(color) {
 
     document.addEventListener("mousemove", onNodeMouseMove);
     document.addEventListener("mouseup", onNodeMouseUp);
+    updateNodePlusButtonPosition();
   }
 
   function onNodeMouseMove(e) {
@@ -454,6 +622,7 @@ function updateNodeColor(color) {
       nodeData.y = newY;
     }
     updateConnections();
+    updateNodePlusButtonPosition();
   }
 
   function onNodeMouseUp(e) {
@@ -463,23 +632,30 @@ function updateNodeColor(color) {
           if (!connectionSourceNodeId) {
             connectionSourceNodeId = activeDraggableNode.id;
             activeDraggableNode.classList.add("connection-source");
-          } else {
+          }  else {
             const targetNodeId = activeDraggableNode.id;
             const sourceNode = nodes.find((n) => n.id === connectionSourceNodeId);
-
+            const targetNode = nodes.find((n) => n.id === targetNodeId);
+            
             if (sourceNode && sourceNode.id !== targetNodeId) {
               if (!sourceNode.connections.includes(targetNodeId)) {
                 sourceNode.connections.push(targetNodeId);
+                targetNode.connections.push(connectionSourceNodeId);
+                addConnection("label","#000000","5",connectionSourceNodeId,targetNodeId)
                 updateConnections();
               }
+              
             }
-
+             
             document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
             isConnectionMode = false;
+            connectNodesButton.classList.remove("active");
+            connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
             connectionSourceNodeId = null;
           }
         } else {
           selectNode(activeDraggableNode.id);
+          updateNodePlusButtonPosition();
         }
       }
       activeDraggableNode.classList.remove("dragging");
@@ -487,6 +663,7 @@ function updateNodeColor(color) {
     }
 
     isDragging = false;
+    connectionSourceNodeId = activeDraggableNode.id;
     activeDraggableNode = null;
     document.removeEventListener("mousemove", onNodeMouseMove);
     document.removeEventListener("mouseup", onNodeMouseUp);
@@ -798,6 +975,10 @@ function updateNodeColor(color) {
     saveBtn.addEventListener("click", () => {
       if (selectedNodeId) {
         const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        const nodeDiv = document.getElementById(selectedNodeId);
+        if (nodeDiv) {
+          updateNodeText(nodeDiv, nodeData);
+        }
         if (nodeData) {
           const newName = editorTitle.textContent.trim();
           
@@ -1149,11 +1330,6 @@ function updateNodeColor(color) {
 
     nodeIdCounter = Math.max(nodeIdCounter, maxIdNum);
 
-    const lapTrinhWebNode = nodes.find((n) => n.id === "node-lap-trinh-web");
-    if (lapTrinhWebNode) {
-      lapTrinhWebNode.connections = ["node-oop", "node-csdl", "node-new", "node-uiux"];
-    }
-
     if (nodes.length === 0) {
       editorTitle.textContent = "New node";
       nodeInputArea.innerHTML = "";
@@ -1382,3 +1558,21 @@ function updateNodeColor(color) {
     linkDescriptionInput.addEventListener('input', updateLinkPreview);
   }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("click", function (e) {
+    const popup = document.getElementById("linePopup");
+    if (!popup) return;
+
+    const isVisible = getComputedStyle(popup).display !== "none";
+
+    if (isVisible && !popup.contains(e.target)) {
+      popup.style.display = "none";
+      document.querySelectorAll(".connector-line").forEach((line) =>
+      line.classList.remove("active-line")
+    );
+    }
+  });
+});
+
+

@@ -689,6 +689,28 @@ body, html {
     box-shadow: 0 0 5px rgba(214, 51, 108, 0.5);
 }
 
+.plus-btn {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #007bff;
+  color: white;
+  text-align: center;
+  line-height: 20px;
+  border-radius: 50%;
+  font-weight: bold;
+  cursor: pointer;
+  display: none;
+}
+
+.node:hover .plus-btn {
+  display: block;
+}
+
+.plus-btn.top { top: -10px; left: 40px; }
+.plus-btn.right { top: 15px; right: -10px; }
+.plus-btn.bottom { bottom: -10px; left: 40px; }
+.plus-btn.left { top: 15px; left: -10px; }
 
 .add-node-btn-canvas {
     position: absolute;
@@ -748,10 +770,8 @@ body, html {
 
 /* SVG lines for connections */
 .connector-line {
-    stroke: #888;
-    stroke-width: 2px;
     fill: none;
-    pointer-events: none; /* Lines should not interfere with node interaction */
+    pointer-events:  visibleStroke; 
 }
 
 /* Resizable Divider */
@@ -853,7 +873,7 @@ body, html {
 }
 
 .connection-source {
-    border: 2px solid #2196F3 !important;
+    border: 2px solid #f3ec21 !important;
 }
 
 .search-navigation {
@@ -893,6 +913,67 @@ body, html {
     color: #666;
     margin: 0 5px;
 }
+
+.connector-line.active-line {
+  stroke: #00f;
+  stroke-width: 6;
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 4px #00f);
+  cursor: pointer;
+}
+
+#linePopup {
+  position: absolute;
+  display: none;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: Arial, sans-serif;
+  width: 220px;
+}
+
+#linePopup label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+#linePopup input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+#applyLineSettingsBtn {
+  background: #007bff;
+  color: white;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+#deleteConnectionBtn {
+  background: #e90505;
+  color: white;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+  width: 100%;
+}
+
+#applyLineSettingsBtn:hover {
+  background: #0056b3;
+}
+
 
 /* Hình dạng node */
 .node.circle {
@@ -986,3 +1067,17 @@ body, html {
     transform: scale(1.1);
     box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
 }
+
+.line-label {
+  pointer-events: none;
+  user-select: none;
+}
+
+#nodePlusButton {
+  color: rgba(189, 6, 6, 0.895);
+  border-radius: 50%;
+  padding: 0px 5px;
+  font-size: 35px;
+  
+}
+
