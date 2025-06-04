@@ -1,98 +1,104 @@
 {
   "nodes": [
     {
-    "id": "node-generated-1",
-    "name": "Cấu trúc dữ liệu",
-    "contentHtml": "Cấu trúc dữ liệu",
-    "contentText": "Cấu trúc dữ liệu",
-    "x": 1300,
-    "y": 1000,
-    "color": "#AED6F1",
-    "connections": ["node-generated-3", "node-generated-4", "node-generated-5", "node-generated-6", "node-generated-7"],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Cấu+trúc+dữ+liệu",
-    "shape": "rectangle"
-  },
-  {
-    "id": "node-generated-2",
-    "name": "Thuật toán ứng dụng",
-    "contentHtml": "Thuật toán ứng dụng",
-    "contentText": "Thuật toán ứng dụng",
-    "x": 1900,
-    "y": 1000,
-    "color": "#F9E79F",
-    "connections": [],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Thuật+toán+ứng+dụng",
-    "shape": "rectangle"
-  },
-  {
-    "id": "node-generated-3",
-    "name": "Mảng",
-    "contentHtml": "Mảng",
-    "contentText": "Mảng",
-    "x": 1300,
-    "y": 900,
-    "color": "#64A1EA",
-    "connections": ["node-generated-1"],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Mảng",
-    "shape": "rectangle"
-  },
-  {
-    "id": "node-generated-4",
-    "name": "Linked List",
-    "contentHtml": "Linked List",
-    "contentText": "Linked List",
-    "x": 1100,
-    "y": 1000,
-    "color": "#FADDF9",
-    "connections": [],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Linked+List",
-    "shape": "rectangle"
-  },
-  {
-    "id": "node-generated-5",
-    "name": "Stack",
-    "contentHtml": "Stack",
-    "contentText": "Stack",
-    "x": 1500,
-    "y": 1000,
-    "color": "#FFC8EF",
-    "connections": [],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Stack",
-    "shape": "rectangle"
-  },
-  {
-    "id": "node-generated-6",
-    "name": "Queue",
-    "contentHtml": "Queue",
-    "contentText": "Queue",
-    "x": 1200,
-    "y": 1100,
-    "color": "#86B5E0",
-    "connections": [],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Queue",
-    "shape": "rectangle"
-  },
-  {
-    "id": "node-generated-7",
-    "name": "Cây",
-    "contentHtml": "Cây",
-    "contentText": "Cây",
-    "x": 1400,
-    "y": 1100,
-    "color": "#BBF3F7",
-    "connections": [],
-    "fileData": null,
-    "linkData": "https://example.com/search?q=Cây",
-    "shape": "rectangle"
-  }
-    
-    
+      "id": "node-generated-1",
+      "name": "Cấu trúc dữ liệu",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1300,
+      "y": 1000,
+      "color": "#AED6F1",
+      "connections": [
+        "node-generated-3",
+        "node-generated-4",
+        "node-generated-5",
+        "node-generated-6",
+        "node-generated-7"
+      ],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-2",
+      "name": "Thuật toán ứng dụng",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1900,
+      "y": 1000,
+      "color": "#F9E79F",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-3",
+      "name": "Mảng",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1300,
+      "y": 900,
+      "color": "#64A1EA",
+      "connections": [
+        "node-generated-1"
+      ],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-4",
+      "name": "Linked List",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1100,
+      "y": 1000,
+      "color": "#FADDF9",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-5",
+      "name": "Stack",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1500,
+      "y": 1000,
+      "color": "#FFC8EF",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-6",
+      "name": "Queue",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1200,
+      "y": 1100,
+      "color": "#86B5E0",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    },
+    {
+      "id": "node-generated-7",
+      "name": "Cây",
+      "contentHtml": null,
+      "contentText": null,
+      "x": 1400,
+      "y": 1100,
+      "color": "#BBF3F7",
+      "connections": [],
+      "fileData": null,
+      "linkData": null,
+      "shape": "rectangle"
+    }
   ],
   "connections": [
     {

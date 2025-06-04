@@ -1081,3 +1081,32 @@ body, html {
   
 }
 
+/* 1. Mặc định ẩn thông báo */
+#mobile-warning {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+#mobile-warning p {
+    font-size: 1.5rem;
+    color: #d6336c;
+    text-align: center;
+    padding: 0 20px;
+}
+
+/* 2. Khi màn hình nhỏ hơn hoặc bằng 600px (CSS-only approach) */
+@media (max-width: 600px) {
+    #app-content {
+        display: none;
+    }
+    #mobile-warning {
+        display: flex;
+    }
+}
