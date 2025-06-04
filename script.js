@@ -5,7 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const fileViewerArea = document.getElementById("file-viewer-area");
   const linkInputArea = document.getElementById("link-input-area");
   const linkUrlInput = document.getElementById("link-url-input");
-  const linkDescriptionInput = document.getElementById("link-description-input");
+  const linkDescriptionInput = document.getElementById(
+    "link-description-input"
+  );
   const linkCategoryInput = document.getElementById("link-category-input");
   const linkPreview = document.getElementById("link-preview");
   const previewLink = document.getElementById("preview-link");
@@ -16,7 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const addNodeButton = document.getElementById("addNodeButton");
   const editorToolbar = document.querySelector(".editor-toolbar");
   const nodeFileInput = document.getElementById("nodeFileInput");
-  const uploadFileToolbarButton = document.getElementById("uploadFileToolbarButton");
+  const uploadFileToolbarButton = document.getElementById(
+    "uploadFileToolbarButton"
+  );
   const connectNodesButton = document.getElementById("connectNodesButton");
   const deleteNodeBtn = document.getElementById("deleteNodeBtn");
   const searchInput = document.querySelector(".search-container input");
@@ -28,10 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const editorPane = document.querySelector(".editor-pane");
   const switchToTextButton = document.getElementById("switchToTextButton");
   const switchToFileButton = document.getElementById("switchToFileButton");
-  const shapeSelector = document.querySelector('.shape-selector');
+  const shapeSelector = document.querySelector(".shape-selector");
   const nodeColorPicker = document.getElementById("nodeColorPicker");
-const colorPresets = document.querySelectorAll(".color-preset");
- const plusBtn = document.getElementById("nodePlusButton");
+  const colorPresets = document.querySelectorAll(".color-preset");
+  const plusBtn = document.getElementById("nodePlusButton");
 
   // ===== State Variables =====
   let isConnectionMode = false;
@@ -53,116 +57,121 @@ const colorPresets = document.querySelectorAll(".color-preset");
   let panOffsetX = 0;
   let panOffsetY = 0;
   let pendingChanges = null; // Store pending changes before save
-  let selectedShape = 'rectangle';
+  let selectedShape = "rectangle";
   // ===== Resizable Divider Functionality =====
   let isResizing = false;
   let startX;
   let startWidth;
 
-document.getElementById("applyLineSettingsBtn").addEventListener("click", function () {
-  const popup = document.getElementById("linePopup");
-  const lineId = popup.dataset.activeLineId;
-  const curConnection = connections.find((n) => n.id === lineId);
-  const label = document.getElementById(curConnection.labelid);
-  const line = document.getElementById(lineId);
-  if (!line) return;
+  document
+    .getElementById("applyLineSettingsBtn")
+    .addEventListener("click", function () {
+      const popup = document.getElementById("linePopup");
+      const lineId = popup.dataset.activeLineId;
+      const curConnection = connections.find((n) => n.id === lineId);
+      const label = document.getElementById(curConnection.labelid);
+      const line = document.getElementById(lineId);
+      if (!line) return;
 
-  // Get values from inputs
-  const newColor = document.getElementById("lineColorInput").value;
-  const newThickness = document.getElementById("lineThicknessInput").value;
-  const newLabel = document.getElementById("lineLabelInput").value;
+      // Get values from inputs
+      const newColor = document.getElementById("lineColorInput").value;
+      const newThickness = document.getElementById("lineThicknessInput").value;
+      const newLabel = document.getElementById("lineLabelInput").value;
 
-  // Update line visually
-  line.setAttribute("stroke", newColor);
-  line.setAttribute("stroke-width", newThickness);
+      // Update line visually
+      line.setAttribute("stroke", newColor);
+      line.setAttribute("stroke-width", newThickness);
 
-  label.textContent = newLabel;
+      label.textContent = newLabel;
 
-  // Update the connection data
-  const connection = connections.find(
-    (c) => c.id === lineId 
-  );
-  if (connection) {
-    connection.color = newColor;
-    connection.label = newLabel;
-    connection.size = newThickness;
-  }
+      // Update the connection data
+      const connection = connections.find((c) => c.id === lineId);
+      if (connection) {
+        connection.color = newColor;
+        connection.label = newLabel;
+        connection.size = newThickness;
+      }
 
-  // Hide popup and remove glow
-  popup.style.display = "none";
-  line.classList.remove("active-line");
-});
+      // Hide popup and remove glow
+      popup.style.display = "none";
+      line.classList.remove("active-line");
+    });
 
-document.getElementById("deleteConnectionBtn").addEventListener("click", function () {
-  const popup = document.getElementById("linePopup");
-  const lineId = popup.dataset.activeLineId;
-  if (!lineId) return;
+  document
+    .getElementById("deleteConnectionBtn")
+    .addEventListener("click", function () {
+      const popup = document.getElementById("linePopup");
+      const lineId = popup.dataset.activeLineId;
+      if (!lineId) return;
 
-  const index = connections.findIndex((c) => c.id === lineId);
-  if (index === -1) return;
+      const index = connections.findIndex((c) => c.id === lineId);
+      if (index === -1) return;
 
-  const connection = connections[index];
-  const { node1, node2 } = connection;
+      const connection = connections[index];
+      const { node1, node2 } = connection;
 
-  connections.splice(index, 1);
+      connections.splice(index, 1);
 
-  const node1Obj = nodes.find((n) => n.id === node1);
-  const node2Obj = nodes.find((n) => n.id === node2);
+      const node1Obj = nodes.find((n) => n.id === node1);
+      const node2Obj = nodes.find((n) => n.id === node2);
 
-  if (node1Obj && node2Obj) {
-    node1Obj.connections = node1Obj.connections.filter(id => id !== node2);
-    node2Obj.connections = node2Obj.connections.filter(id => id !== node1);
-  }
+      if (node1Obj && node2Obj) {
+        node1Obj.connections = node1Obj.connections.filter(
+          (id) => id !== node2
+        );
+        node2Obj.connections = node2Obj.connections.filter(
+          (id) => id !== node1
+        );
+      }
 
-  const lineEl = document.getElementById(lineId);
-  if (lineEl) lineEl.remove();
+      const lineEl = document.getElementById(lineId);
+      if (lineEl) lineEl.remove();
 
-  const labelEl = document.getElementById(connection.labelid);
-  if (labelEl) labelEl.remove();
+      const labelEl = document.getElementById(connection.labelid);
+      if (labelEl) labelEl.remove();
 
-  popup.style.display = "none";
-  updateConnections();
-});
-
+      popup.style.display = "none";
+      updateConnections();
+    });
 
   function initResizableDivider() {
     const resizableDivider = document.querySelector(".resizable-divider");
     const editorPane = document.querySelector(".editor-pane");
-    
+
     if (!resizableDivider || !editorPane) return;
 
-    resizableDivider.addEventListener('mousedown', (e) => {
+    resizableDivider.addEventListener("mousedown", (e) => {
       isResizing = true;
       startX = e.pageX;
       startWidth = editorPane.offsetWidth;
-      resizableDivider.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
+      resizableDivider.classList.add("dragging");
+      document.body.style.cursor = "col-resize";
       e.preventDefault();
       e.stopPropagation();
     });
 
-    document.addEventListener('mousemove', (e) => {
+    document.addEventListener("mousemove", (e) => {
       if (!isResizing) return;
 
       const width = startWidth + (e.pageX - startX);
       const minWidth = 0;
       const maxWidth = 800;
-      
+
       if (width >= minWidth && width <= maxWidth) {
         editorPane.style.width = `${width}px`;
       }
     });
 
-    document.addEventListener('mouseup', () => {
+    document.addEventListener("mouseup", () => {
       if (isResizing) {
         isResizing = false;
-        resizableDivider.classList.remove('dragging');
-        document.body.style.cursor = '';
+        resizableDivider.classList.remove("dragging");
+        document.body.style.cursor = "";
       }
     });
 
     // Prevent text selection while resizing
-    resizableDivider.addEventListener('selectstart', (e) => {
+    resizableDivider.addEventListener("selectstart", (e) => {
       e.preventDefault();
     });
   }
@@ -179,14 +188,20 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
 
   function ensureSvgContainer() {
     if (!svgLinesContainer) {
-      svgLinesContainer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svgLinesContainer = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+      );
       svgLinesContainer.style.position = "absolute";
       svgLinesContainer.style.top = "0";
       svgLinesContainer.style.left = "0";
       svgLinesContainer.style.width = "100%";
       svgLinesContainer.style.height = "100%";
       svgLinesContainer.style.pointerEvents = "none";
-      mindMapContainer.insertBefore(svgLinesContainer, mindMapContainer.firstChild);
+      mindMapContainer.insertBefore(
+        svgLinesContainer,
+        mindMapContainer.firstChild
+      );
     }
     svgLinesContainer.setAttribute("width", mindMapContainer.scrollWidth);
     svgLinesContainer.setAttribute("height", mindMapContainer.scrollHeight);
@@ -202,7 +217,7 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     if (nodeData.color) {
       nodeDiv.style.backgroundColor = nodeData.color;
     }
-    
+
     const displayText = nodeData.name || "Node";
     nodeDiv.innerHTML = escapeHTML(displayText);
     nodeDiv.dataset.contentHtml = nodeData.contentHtml;
@@ -215,19 +230,30 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     }
     if (nodeData.shape) {
       nodeDiv.classList.add(nodeData.shape);
-  }
-  if (nodeData.linkData?.category) {
-  nodeDiv.title = nodeData.linkData.category;
-}
+    }
+    if (nodeData.linkData?.category) {
+      nodeDiv.title = nodeData.linkData.category;
+    }
     nodeDiv.addEventListener("mousedown", onNodeMouseDown);
     return nodeDiv;
   }
 
-  function addNode(name = "New Node", x = 50, y = 50, color = "#FFFFE0", contentHtml = "", fileData = null, linkData = null,shape = 'rectangle') {
+  function addNode(
+    name = "New Node",
+    x = 50,
+    y = 50,
+    color = "#FFFFE0",
+    contentHtml = "",
+    fileData = null,
+    linkData = null,
+    shape = "rectangle"
+  ) {
     nodeIdCounter++;
     const defaultHtml = contentHtml || name;
-    const contentText = new DOMParser().parseFromString(defaultHtml, "text/html").body.textContent || "";
-    
+    const contentText =
+      new DOMParser().parseFromString(defaultHtml, "text/html").body
+        .textContent || "";
+
     const newNodeData = {
       id: `node-generated-${nodeIdCounter}`,
       name: name,
@@ -239,9 +265,9 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
       connections: [],
       fileData: fileData,
       linkData: linkData,
-      shape :shape
+      shape: shape,
     };
-    
+
     nodes.push(newNodeData);
     const nodeElement = createNodeElement(newNodeData);
     mindMapContainer.appendChild(nodeElement);
@@ -249,7 +275,13 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     return newNodeData;
   }
 
-  function addConnection(label = "label",color = "#FFFFE0",size = "15",node1Id,node2Id) {
+  function addConnection(
+    label = "label",
+    color = "#FFFFE0",
+    size = "15",
+    node1Id,
+    node2Id
+  ) {
     connectionIdCounter++;
     const newConnectionData = {
       id: `connection-generated-${connectionIdCounter}`,
@@ -257,35 +289,33 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
       label: label,
       color: color,
       size: size,
-      node1: node1Id, 
+      node1: node1Id,
       node2: node2Id,
     };
-    
+
     connections.push(newConnectionData);
-    selectedConnectionId=newConnectionData.id;
+    selectedConnectionId = newConnectionData.id;
     return newConnectionData;
   }
 
   function selectNode(nodeId) {
     if (nodeId === selectedNodeId && nodeInputArea.innerHTML !== "") return;
-    
+    console.log(nodes);
     // Clear any pending changes when selecting a new node
     pendingChanges = null;
-    
-    const editorPane = document.querySelector('.editor-pane');
+
+    const editorPane = document.querySelector(".editor-pane");
     if (nodeId) {
-        editorPane.classList.remove('hidden');
-        loadNodeInEditor(nodeId);
+      editorPane.classList.remove("hidden");
+      loadNodeInEditor(nodeId);
     } else {
-        editorPane.classList.add('hidden');
-        selectedNodeId = null;
-        editorTitle.textContent = "New node";
-        nodeInputArea.innerHTML = "";
-        nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
+      editorPane.classList.add("hidden");
+      selectedNodeId = null;
+      editorTitle.textContent = "New node";
+      nodeInputArea.innerHTML = "";
+      nodeInputArea.setAttribute("placeholder", "Nhập nội dung...");
     }
   }
-
-
 
   function loadNodeInEditor(nodeId) {
     const nodeData = nodes.find((n) => n.id === nodeId);
@@ -302,32 +332,32 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
       switchToFileButton.style.display = "none";
       if (nodeData.color) {
         nodeColorPicker.value = nodeData.color;
-    }
+      }
       if (nodeData.shape) {
-        shapeSelector.querySelectorAll('button').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.shape === nodeData.shape) {
-                btn.classList.add('active');
-                selectedShape = nodeData.shape;
-            }
+        shapeSelector.querySelectorAll("button").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.dataset.shape === nodeData.shape) {
+            btn.classList.add("active");
+            selectedShape = nodeData.shape;
+          }
         });
-    }
+      }
       if (nodeData.fileData) {
         fileViewerArea.style.display = "block";
         switchToTextButton.style.display = "inline-block";
         switchToFileButton.style.display = "none";
-        
-        if (nodeData.fileData.type.startsWith('image/')) {
+
+        if (nodeData.fileData.type.startsWith("image/")) {
           fileViewerArea.innerHTML = `<img src="${nodeData.fileData.url}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
-        } else if (nodeData.fileData.type === 'application/pdf') {
+        } else if (nodeData.fileData.type === "application/pdf") {
           fileViewerArea.innerHTML = `<embed src="${nodeData.fileData.url}" type="application/pdf" width="100%" height="100%">`;
-        } else if (nodeData.fileData.type.startsWith('video/')) {
+        } else if (nodeData.fileData.type.startsWith("video/")) {
           fileViewerArea.innerHTML = `
             <video controls style="max-width: 100%; max-height: 100%;">
               <source src="${nodeData.fileData.url}" type="${nodeData.fileData.type}">
               Your browser does not support the video tag.
             </video>`;
-        } else if (nodeData.fileData.type.startsWith('audio/')) {
+        } else if (nodeData.fileData.type.startsWith("audio/")) {
           fileViewerArea.innerHTML = `
             <audio controls style="width: 100%; margin: 20px 0;">
               <source src="${nodeData.fileData.url}" type="${nodeData.fileData.type}">
@@ -349,13 +379,15 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
         switchToFileButton.style.display = "none";
         nodeInputArea.innerHTML = nodeData.contentHtml;
       }
-      
+
       updateNodeSelectionVisual();
     }
   }
 
   function updateNodeSelectionVisual() {
-    document.querySelectorAll(".node").forEach((n) => n.classList.remove("selected-canvas"));
+    document
+      .querySelectorAll(".node")
+      .forEach((n) => n.classList.remove("selected-canvas"));
     if (selectedNodeId) {
       const nodeEl = document.getElementById(selectedNodeId);
       if (nodeEl) nodeEl.classList.add("selected-canvas");
@@ -370,15 +402,17 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     }
 
     // Remove the node from the nodes array
-    const nodeIndex = nodes.findIndex(n => n.id === nodeId);
+    const nodeIndex = nodes.findIndex((n) => n.id === nodeId);
     if (nodeIndex !== -1) {
       // Remove all connections to this node from other nodes
-      nodes.forEach(node => {
+      nodes.forEach((node) => {
         if (node.connections) {
-          node.connections = node.connections.filter(connId => connId !== nodeId);
+          node.connections = node.connections.filter(
+            (connId) => connId !== nodeId
+          );
         }
       });
-      
+
       // Remove the node
       nodes.splice(nodeIndex, 1);
     }
@@ -404,7 +438,7 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     if (!node1El || !node2El || !svgLinesContainer) return;
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.id = connection.id; 
+    line.id = connection.id;
     const x1 = node1El.offsetLeft + node1El.offsetWidth / 2;
     const y1 = node1El.offsetTop + node1El.offsetHeight / 2;
     const x2 = node2El.offsetLeft + node2El.offsetWidth / 2;
@@ -415,51 +449,52 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
     line.setAttribute("class", "connector-line");
-    line.setAttribute("stroke", connection.color);           
-    line.setAttribute("stroke-width", connection.size);        
+    line.setAttribute("stroke", connection.color);
+    line.setAttribute("stroke-width", connection.size);
     line.setAttribute("pointer-events", "visibleStroke");
-    
+
     line.dataset.from = connection.node1;
     line.dataset.to = connection.node2;
 
-      // Label logic
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    // Label logic
+    const label = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "text"
+    );
     const midX = (x1 + x2) / 2;
     const midY = (y1 + y2) / 2;
-    label.id = connection.labelid; 
+    label.id = connection.labelid;
     label.setAttribute("x", midX);
-    label.setAttribute("y", midY - 15); 
+    label.setAttribute("y", midY - 15);
     label.setAttribute("text-anchor", "middle");
     label.setAttribute("class", "line-label");
     label.setAttribute("font-size", "12px");
-    label.setAttribute("fill", "#000"); 
+    label.setAttribute("fill", "#000");
     label.textContent = connection.label || "";
 
     line.addEventListener("click", function (e) {
-    e.stopPropagation(); 
+      e.stopPropagation();
 
+      document
+        .querySelectorAll(".connector-line")
+        .forEach((l) => l.classList.remove("active-line"));
+      line.classList.add("active-line");
 
-    document.querySelectorAll(".connector-line").forEach((l) =>
-      l.classList.remove("active-line")
-    );
-    line.classList.add("active-line");
+      const popup = document.getElementById("linePopup");
+      popup.style.left = e.pageX + "px";
+      popup.style.top = e.pageY + "px";
+      popup.style.display = "block";
 
-    
-    const popup = document.getElementById("linePopup");
-    popup.style.left = e.pageX + "px";
-    popup.style.top = e.pageY + "px";
-    popup.style.display = "block";
+      document.getElementById("lineColorInput").value =
+        connection.color || "#000000";
+      document.getElementById("lineThicknessInput").value =
+        parseInt(line.getAttribute("stroke-width")) || 2;
+      document.getElementById("lineLabelInput").value = connection.label || "";
 
-    
-    document.getElementById("lineColorInput").value = connection.color || "#000000";
-    document.getElementById("lineThicknessInput").value = parseInt(line.getAttribute("stroke-width")) || 2;
-    document.getElementById("lineLabelInput").value = connection.label || "";
-
-    
-    popup.dataset.activeLineId = connection.id;
-    popup.dataset.from = connection.node1;
-    popup.dataset.to = connection.node2;
-  });
+      popup.dataset.activeLineId = connection.id;
+      popup.dataset.from = connection.node1;
+      popup.dataset.to = connection.node2;
+    });
 
     svgLinesContainer.appendChild(line);
     svgLinesContainer.appendChild(label);
@@ -468,100 +503,96 @@ document.getElementById("deleteConnectionBtn").addEventListener("click", functio
   function updateConnections() {
     ensureSvgContainer();
     svgLinesContainer.innerHTML = "";
-    connections.forEach((connection) => {    
-            drawLine(connection);
+    connections.forEach((connection) => {
+      drawLine(connection);
     });
   }
-// Thêm event listener cho shape selector
-shapeSelector.addEventListener('click', (e) => {
-  const button = e.target.closest('button[data-shape]');
-  if (button && selectedNodeId) {
-      shapeSelector.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
+  // Thêm event listener cho shape selector
+  shapeSelector.addEventListener("click", (e) => {
+    const button = e.target.closest("button[data-shape]");
+    if (button && selectedNodeId) {
+      shapeSelector
+        .querySelectorAll("button")
+        .forEach((btn) => btn.classList.remove("active"));
+      button.classList.add("active");
       selectedShape = button.dataset.shape;
-      
+
       const nodeElement = document.getElementById(selectedNodeId);
       if (nodeElement) {
-          // Xóa tất cả các class hình dạng cũ
-          nodeElement.classList.remove(
-              'circle', 'diamond', 'hexagon', 'rounded'
-          );
-          
-          // Thêm class mới
-          if (selectedShape !== 'rectangle') {
-              nodeElement.classList.add(selectedShape);
-          }
-          
-          // Cập nhật vào node data
-          const nodeData = nodes.find(n => n.id === selectedNodeId);
-          if (nodeData) {
-              nodeData.shape = selectedShape;
-          }
-      }
-  }
-});
-// Thêm event listeners
-nodeColorPicker.addEventListener("input", (e) => {
-  updateNodeColor(e.target.value);
-});
+        // Xóa tất cả các class hình dạng cũ
+        nodeElement.classList.remove("circle", "diamond", "hexagon", "rounded");
 
-colorPresets.forEach(preset => {
-  preset.addEventListener("click", (e) => {
+        // Thêm class mới
+        if (selectedShape !== "rectangle") {
+          nodeElement.classList.add(selectedShape);
+        }
+
+        // Cập nhật vào node data
+        const nodeData = nodes.find((n) => n.id === selectedNodeId);
+        if (nodeData) {
+          nodeData.shape = selectedShape;
+        }
+      }
+    }
+  });
+  // Thêm event listeners
+  nodeColorPicker.addEventListener("input", (e) => {
+    updateNodeColor(e.target.value);
+  });
+
+  colorPresets.forEach((preset) => {
+    preset.addEventListener("click", (e) => {
       const color = e.target.dataset.color;
       nodeColorPicker.value = color;
       updateNodeColor(color);
+    });
   });
-});
 
-// Hàm cập nhật màu node
-function updateNodeColor(color) {
-  if (!selectedNodeId) return;
-  
-  const nodeElement = document.getElementById(selectedNodeId);
-  const nodeData = nodes.find(n => n.id === selectedNodeId);
-  
-  if (nodeElement && nodeData) {
+  // Hàm cập nhật màu node
+  function updateNodeColor(color) {
+    if (!selectedNodeId) return;
+
+    const nodeElement = document.getElementById(selectedNodeId);
+    const nodeData = nodes.find((n) => n.id === selectedNodeId);
+
+    if (nodeElement && nodeData) {
       nodeElement.style.backgroundColor = color;
       nodeData.color = color;
+    }
   }
-}
 
   // ===== Drag and Drop Handlers =====
-function updateNodePlusButtonPosition() {
-  const plusBtn = document.getElementById("nodePlusButton");
-  if (!activeDraggableNode || !plusBtn || isConnectionMode) {
-    plusBtn.style.display = "none";
-    return;
+  function updateNodePlusButtonPosition() {
+    const plusBtn = document.getElementById("nodePlusButton");
+    if (!activeDraggableNode || !plusBtn || isConnectionMode) {
+      plusBtn.style.display = "none";
+      return;
+    }
+
+    plusBtn.style.display = "block";
+    plusBtn.style.left = "-9999px";
+    plusBtn.style.top = "-9999px";
+
+    const nodeLeft = parseFloat(activeDraggableNode.style.left);
+    const nodeTop = parseFloat(activeDraggableNode.style.top);
+    const nodeWidth = activeDraggableNode.offsetWidth;
+    const btnWidth = plusBtn.offsetWidth;
+    const btnHeight = plusBtn.offsetHeight;
+
+    const btnLeft = nodeLeft + nodeWidth / 2 - btnWidth / 2;
+    const btnTop = nodeTop - btnHeight - 5;
+
+    plusBtn.style.left = `${btnLeft}px`;
+    plusBtn.style.top = `${btnTop}px`;
   }
 
- 
-  plusBtn.style.display = "block";
-  plusBtn.style.left = "-9999px";
-  plusBtn.style.top = "-9999px";
-
-  const nodeLeft = parseFloat(activeDraggableNode.style.left);
-  const nodeTop = parseFloat(activeDraggableNode.style.top);
-  const nodeWidth = activeDraggableNode.offsetWidth;
-  const btnWidth = plusBtn.offsetWidth;
-  const btnHeight = plusBtn.offsetHeight;
-
-  
-  const btnLeft = nodeLeft + nodeWidth / 2 - btnWidth / 2;
-  const btnTop = nodeTop - btnHeight - 5;
-
-  
-  plusBtn.style.left = `${btnLeft}px`;
-  plusBtn.style.top = `${btnTop}px`;
-}
-
-
-plusBtn.addEventListener("click", (e) => {
-  e.stopPropagation();  
-  isConnectionMode = true; 
-  connectNodesButton.classList.add("active");
-  connectNodesButton.innerHTML = "Click nodes to connect";
-  plusBtn.style.display = "none";
-});
+  plusBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    isConnectionMode = true;
+    connectNodesButton.classList.add("active");
+    connectNodesButton.innerHTML = "Click nodes to connect";
+    plusBtn.style.display = "none";
+  });
 
   function onNodeMouseDown(e) {
     if (e.button !== 0) return;
@@ -574,10 +605,16 @@ plusBtn.addEventListener("click", (e) => {
 
     const rect = activeDraggableNode.getBoundingClientRect();
     const containerRect = mindMapContainer.getBoundingClientRect();
-    
+
     // Calculate drag offset considering zoom, pan, and container position
-    dragOffsetX = (e.clientX - containerRect.left) / currentZoom - panOffsetX - parseInt(activeDraggableNode.style.left);
-    dragOffsetY = (e.clientY - containerRect.top) / currentZoom - panOffsetY - parseInt(activeDraggableNode.style.top);
+    dragOffsetX =
+      (e.clientX - containerRect.left) / currentZoom -
+      panOffsetX -
+      parseInt(activeDraggableNode.style.left);
+    dragOffsetY =
+      (e.clientY - containerRect.top) / currentZoom -
+      panOffsetY -
+      parseInt(activeDraggableNode.style.top);
 
     activeDraggableNode.classList.add("dragging");
     activeDraggableNode.style.zIndex = 1000;
@@ -598,17 +635,25 @@ plusBtn.addEventListener("click", (e) => {
     e.preventDefault();
 
     const containerRect = mindMapContainer.getBoundingClientRect();
-    
+
     // Calculate new position considering zoom and pan
-    let newX = (e.clientX - containerRect.left) / currentZoom - panOffsetX - dragOffsetX;
-    let newY = (e.clientY - containerRect.top) / currentZoom - panOffsetY - dragOffsetY;
+    let newX =
+      (e.clientX - containerRect.left) / currentZoom - panOffsetX - dragOffsetX;
+    let newY =
+      (e.clientY - containerRect.top) / currentZoom - panOffsetY - dragOffsetY;
 
     const nodeWidth = activeDraggableNode.offsetWidth;
     const nodeHeight = activeDraggableNode.offsetHeight;
-    
+
     // Allow nodes to be dragged anywhere within the large canvas
-    newX = Math.max(0, Math.min(newX, mindMapContainer.offsetWidth - nodeWidth));
-    newY = Math.max(0, Math.min(newY, mindMapContainer.offsetHeight - nodeHeight));
+    newX = Math.max(
+      0,
+      Math.min(newX, mindMapContainer.offsetWidth - nodeWidth)
+    );
+    newY = Math.max(
+      0,
+      Math.min(newY, mindMapContainer.offsetHeight - nodeHeight)
+    );
 
     activeDraggableNode.style.left = newX + "px";
     activeDraggableNode.style.top = newY + "px";
@@ -620,7 +665,6 @@ plusBtn.addEventListener("click", (e) => {
     }
     updateConnections();
     updateNodePlusButtonPosition();
-    
   }
 
   function onNodeMouseUp(e) {
@@ -630,26 +674,36 @@ plusBtn.addEventListener("click", (e) => {
           if (!connectionSourceNodeId) {
             connectionSourceNodeId = activeDraggableNode.id;
             activeDraggableNode.classList.add("connection-source");
-          }  else {
+          } else {
             const targetNodeId = activeDraggableNode.id;
-            const sourceNode = nodes.find((n) => n.id === connectionSourceNodeId);
+            const sourceNode = nodes.find(
+              (n) => n.id === connectionSourceNodeId
+            );
             const targetNode = nodes.find((n) => n.id === targetNodeId);
-            
+
             if (sourceNode && sourceNode.id !== targetNodeId) {
               if (!sourceNode.connections.includes(targetNodeId)) {
                 sourceNode.connections.push(targetNodeId);
                 targetNode.connections.push(connectionSourceNodeId);
-                addConnection("label","#000000","5",connectionSourceNodeId,targetNodeId)
-                
+                addConnection(
+                  "label",
+                  "#000000",
+                  "5",
+                  connectionSourceNodeId,
+                  targetNodeId
+                );
+
                 updateConnections();
               }
-              
             }
-             
-            document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
+
+            document
+              .querySelectorAll(".node.connection-source")
+              .forEach((n) => n.classList.remove("connection-source"));
             isConnectionMode = false;
             connectNodesButton.classList.remove("active");
-            connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
+            connectNodesButton.innerHTML =
+              '<i class="fas fa-project-diagram"></i> Click to Connect';
             connectionSourceNodeId = null;
           }
         } else {
@@ -676,35 +730,40 @@ plusBtn.addEventListener("click", (e) => {
       if (button && button.dataset.command) {
         const command = button.dataset.command;
         const value = button.dataset.value || null;
-        
+
         // Handle alignment commands
-        if (command.startsWith('justify')) {
+        if (command.startsWith("justify")) {
           // Remove active class from all alignment buttons
-          editorToolbar.querySelectorAll('button[data-command^="justify"]').forEach(btn => {
-            btn.classList.remove('active');
-          });
-          
+          editorToolbar
+            .querySelectorAll('button[data-command^="justify"]')
+            .forEach((btn) => {
+              btn.classList.remove("active");
+            });
+
           // Add active class to clicked button
-          button.classList.add('active');
+          button.classList.add("active");
         }
-        
+
         // Handle list commands
-        if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
+        if (
+          command === "insertUnorderedList" ||
+          command === "insertOrderedList"
+        ) {
           // Toggle the list type
           document.execCommand(command, false, value);
-          
+
           // Update button states
           updateListButtons();
-        } else if (command === 'indent' || command === 'outdent') {
+        } else if (command === "indent" || command === "outdent") {
           // Handle indentation
           document.execCommand(command, false, value);
-          
+
           // Update button states after indentation
           setTimeout(updateListButtons, 0);
         } else {
           document.execCommand(command, false, value);
         }
-        
+
         nodeInputArea.focus();
       }
     });
@@ -712,14 +771,21 @@ plusBtn.addEventListener("click", (e) => {
 
   // Add function to update alignment button states
   function updateAlignmentButtons() {
-    const alignmentCommands = ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'];
-    alignmentCommands.forEach(cmd => {
-      const button = editorToolbar.querySelector(`button[data-command="${cmd}"]`);
+    const alignmentCommands = [
+      "justifyLeft",
+      "justifyCenter",
+      "justifyRight",
+      "justifyFull",
+    ];
+    alignmentCommands.forEach((cmd) => {
+      const button = editorToolbar.querySelector(
+        `button[data-command="${cmd}"]`
+      );
       if (button) {
         if (document.queryCommandState(cmd)) {
-          button.classList.add('active');
+          button.classList.add("active");
         } else {
-          button.classList.remove('active');
+          button.classList.remove("active");
         }
       }
     });
@@ -727,11 +793,11 @@ plusBtn.addEventListener("click", (e) => {
 
   // Update alignment buttons when selection changes
   if (nodeInputArea) {
-    nodeInputArea.addEventListener('keyup', () => {
+    nodeInputArea.addEventListener("keyup", () => {
       updateAlignmentButtons();
       updateListButtons();
     });
-    nodeInputArea.addEventListener('mouseup', () => {
+    nodeInputArea.addEventListener("mouseup", () => {
       updateAlignmentButtons();
       updateListButtons();
     });
@@ -739,14 +805,16 @@ plusBtn.addEventListener("click", (e) => {
 
   // Add function to update list button states
   function updateListButtons() {
-    const listCommands = ['insertUnorderedList', 'insertOrderedList'];
-    listCommands.forEach(cmd => {
-      const button = editorToolbar.querySelector(`button[data-command="${cmd}"]`);
+    const listCommands = ["insertUnorderedList", "insertOrderedList"];
+    listCommands.forEach((cmd) => {
+      const button = editorToolbar.querySelector(
+        `button[data-command="${cmd}"]`
+      );
       if (button) {
         if (document.queryCommandState(cmd)) {
-          button.classList.add('active');
+          button.classList.add("active");
         } else {
-          button.classList.remove('active');
+          button.classList.remove("active");
         }
       }
     });
@@ -754,29 +822,29 @@ plusBtn.addEventListener("click", (e) => {
 
   // Add keyboard shortcuts for lists
   if (nodeInputArea) {
-    nodeInputArea.addEventListener('keydown', (e) => {
+    nodeInputArea.addEventListener("keydown", (e) => {
       // Tab key for indentation
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         e.preventDefault();
         if (e.shiftKey) {
-          document.execCommand('outdent', false);
+          document.execCommand("outdent", false);
         } else {
-          document.execCommand('indent', false);
+          document.execCommand("indent", false);
         }
         updateListButtons();
       }
-      
+
       // Enter key handling for lists
-      if (e.key === 'Enter') {
+      if (e.key === "Enter") {
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
-        const listItem = range.startContainer.closest('li');
-        
+        const listItem = range.startContainer.closest("li");
+
         if (listItem) {
           // If at the end of a list item, create a new list item
           if (range.startOffset === range.startContainer.length) {
             e.preventDefault();
-            document.execCommand('insertLineBreak');
+            document.execCommand("insertLineBreak");
             updateListButtons();
           }
         }
@@ -801,27 +869,27 @@ plusBtn.addEventListener("click", (e) => {
         name: file.name,
         type: file.type,
         size: file.size,
-        url: fileUrl
+        url: fileUrl,
       };
 
       // Add file type icon to node name
-      let fileIcon = '';
-      if (file.type.startsWith('image/')) {
+      let fileIcon = "";
+      if (file.type.startsWith("image/")) {
         fileIcon = '<i class="fas fa-image"></i> ';
-      } else if (file.type === 'application/pdf') {
+      } else if (file.type === "application/pdf") {
         fileIcon = '<i class="fas fa-file-pdf"></i> ';
-      } else if (file.type.startsWith('video/')) {
+      } else if (file.type.startsWith("video/")) {
         fileIcon = '<i class="fas fa-video"></i> ';
-      } else if (file.type.startsWith('audio/')) {
+      } else if (file.type.startsWith("audio/")) {
         fileIcon = '<i class="fas fa-music"></i> ';
       }
 
       if (selectedNodeId) {
         // Store pending changes instead of applying immediately
         pendingChanges = {
-          type: 'file',
+          type: "file",
           fileData: fileData,
-          fileIcon: fileIcon
+          fileIcon: fileIcon,
         };
 
         // Show preview in editor
@@ -830,18 +898,18 @@ plusBtn.addEventListener("click", (e) => {
         uploadFileToolbarButton.style.display = "none";
         switchToTextButton.style.display = "inline-block";
         switchToFileButton.style.display = "none";
-        
-        if (file.type.startsWith('image/')) {
+
+        if (file.type.startsWith("image/")) {
           fileViewerArea.innerHTML = `<img src="${fileUrl}" alt="Uploaded image" style="max-width: 100%; max-height: 100%;">`;
-        } else if (file.type === 'application/pdf') {
+        } else if (file.type === "application/pdf") {
           fileViewerArea.innerHTML = `<embed src="${fileUrl}" type="application/pdf" width="100%" height="100%">`;
-        } else if (file.type.startsWith('video/')) {
+        } else if (file.type.startsWith("video/")) {
           fileViewerArea.innerHTML = `
             <video controls style="max-width: 100%; max-height: 100%;">
               <source src="${fileUrl}" type="${file.type}">
               Your browser does not support the video tag.
             </video>`;
-        } else if (file.type.startsWith('audio/')) {
+        } else if (file.type.startsWith("audio/")) {
           fileViewerArea.innerHTML = `
             <audio controls style="width: 100%; margin: 20px 0;">
               <source src="${fileUrl}" type="${file.type}">
@@ -850,17 +918,19 @@ plusBtn.addEventListener("click", (e) => {
         }
       } else {
         // For new nodes, place in center of viewport
-        const canvasPane = document.querySelector('.canvas-pane');
+        const canvasPane = document.querySelector(".canvas-pane");
         const paneRect = canvasPane.getBoundingClientRect();
-        
+
         // Calculate the center of the visible area, taking into account zoom and pan
-        const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
-        const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
-        
+        const centerX = -panOffsetX + paneRect.width / (2 * currentZoom);
+        const centerY = -panOffsetY + paneRect.height / (2 * currentZoom);
+
         // For new nodes, use a default name with file info
         const defaultName = "New Node";
         addNode(defaultName, centerX, centerY, "#FFFFE0", "", fileData);
-        const newNodeEl = document.getElementById(`node-generated-${nodeIdCounter}`);
+        const newNodeEl = document.getElementById(
+          `node-generated-${nodeIdCounter}`
+        );
         if (newNodeEl) {
           newNodeEl.innerHTML = fileIcon + escapeHTML(defaultName);
         }
@@ -881,9 +951,9 @@ plusBtn.addEventListener("click", (e) => {
   }
 
   // Back Button hides the editor pane
-  const backBtn = document.querySelector('.back-btn');
+  const backBtn = document.querySelector(".back-btn");
   if (backBtn) {
-    backBtn.addEventListener('click', () => {
+    backBtn.addEventListener("click", () => {
       selectNode(null);
     });
   }
@@ -894,9 +964,9 @@ plusBtn.addEventListener("click", (e) => {
       if (selectedNodeId) {
         // Store pending change to switch to text mode
         pendingChanges = {
-          type: 'switchToText'
+          type: "switchToText",
         };
-        
+
         // Show text editor preview
         nodeInputArea.style.display = "block";
         fileViewerArea.style.display = "none";
@@ -915,9 +985,9 @@ plusBtn.addEventListener("click", (e) => {
       if (selectedNodeId) {
         // Store pending change to switch to file mode
         pendingChanges = {
-          type: 'switchToFile'
+          type: "switchToFile",
         };
-        
+
         // Show file input preview
         nodeInputArea.style.display = "none";
         fileViewerArea.style.display = "none";
@@ -925,7 +995,7 @@ plusBtn.addEventListener("click", (e) => {
         uploadFileToolbarButton.style.display = "inline-block";
         switchToTextButton.style.display = "inline-block";
         switchToFileButton.style.display = "none";
-        
+
         // Trigger file input click
         nodeFileInput.click();
       }
@@ -938,9 +1008,9 @@ plusBtn.addEventListener("click", (e) => {
       if (selectedNodeId) {
         // Store pending change to switch to link mode
         pendingChanges = {
-          type: 'switchToLink'
+          type: "switchToLink",
         };
-        
+
         // Show link input preview
         nodeInputArea.style.display = "none";
         fileViewerArea.style.display = "none";
@@ -948,23 +1018,26 @@ plusBtn.addEventListener("click", (e) => {
         uploadFileToolbarButton.style.display = "none";
         switchToTextButton.style.display = "inline-block";
         switchToFileButton.style.display = "inline-block";
-        
+
         // Clear previous values
         linkUrlInput.value = "";
         linkDescriptionInput.value = "";
         linkPreview.style.display = "none";
       } else {
         // For new nodes, place in center of viewport
-        const canvasPane = document.querySelector('.canvas-pane');
+        const canvasPane = document.querySelector(".canvas-pane");
         const paneRect = canvasPane.getBoundingClientRect();
-        
+
         // Calculate the center of the visible area, taking into account zoom and pan
-        const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
-        const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
-        
+        const centerX = -panOffsetX + paneRect.width / (2 * currentZoom);
+        const centerY = -panOffsetY + paneRect.height / (2 * currentZoom);
+
         // For new nodes, use a default name
         const defaultName = "New Link";
-        addNode(defaultName, centerX, centerY, "#FFFFE0", "", null, { url: "", description: "" });
+        addNode(defaultName, centerX, centerY, "#FFFFE0", "", null, {
+          url: "",
+          description: "",
+        });
       }
     });
   }
@@ -978,44 +1051,49 @@ plusBtn.addEventListener("click", (e) => {
 
         if (nodeData) {
           const newName = editorTitle.textContent.trim();
-          
+
           if (pendingChanges) {
-            if (pendingChanges.type === 'file') {
+            if (pendingChanges.type === "file") {
               // Apply pending file changes
               nodeData.fileData = pendingChanges.fileData;
               nodeData.linkData = null; // Clear link data
               nodeData.name = newName;
               const nodeEl = document.getElementById(selectedNodeId);
               if (nodeEl) {
-                nodeEl.dataset.fileData = JSON.stringify(pendingChanges.fileData);
-                nodeEl.removeAttribute('data-link-data');
-                nodeEl.innerHTML = pendingChanges.fileIcon + escapeHTML(newName);
+                nodeEl.dataset.fileData = JSON.stringify(
+                  pendingChanges.fileData
+                );
+                nodeEl.removeAttribute("data-link-data");
+                nodeEl.innerHTML =
+                  pendingChanges.fileIcon + escapeHTML(newName);
               }
-            } else if (pendingChanges.type === 'switchToText') {
+            } else if (pendingChanges.type === "switchToText") {
               // Apply switch to text changes
               nodeData.fileData = null;
               nodeData.linkData = null;
               nodeData.name = newName;
               const nodeEl = document.getElementById(selectedNodeId);
               if (nodeEl) {
-                nodeEl.removeAttribute('data-file-data');
-                nodeEl.removeAttribute('data-link-data');
+                nodeEl.removeAttribute("data-file-data");
+                nodeEl.removeAttribute("data-link-data");
                 nodeEl.innerHTML = escapeHTML(newName);
               }
-            } else if (pendingChanges.type === 'switchToLink') {
+            } else if (pendingChanges.type === "switchToLink") {
               // Apply switch to link changes
               nodeData.fileData = null;
               nodeData.linkData = {
                 url: linkUrlInput.value.trim(),
                 description: linkDescriptionInput.value.trim(),
-                category: linkCategoryInput.value.trim()
+                category: linkCategoryInput.value.trim(),
               };
               nodeData.name = newName;
               const nodeEl = document.getElementById(selectedNodeId);
               if (nodeEl) {
-                nodeEl.removeAttribute('data-file-data');
+                nodeEl.removeAttribute("data-file-data");
                 nodeEl.dataset.linkData = JSON.stringify(nodeData.linkData);
-                nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
+                nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(
+                  newName
+                )}`;
               }
             }
             pendingChanges = null;
@@ -1028,13 +1106,16 @@ plusBtn.addEventListener("click", (e) => {
             const nodeEl = document.getElementById(selectedNodeId);
             if (nodeEl) {
               nodeEl.dataset.linkData = JSON.stringify(nodeData.linkData);
-              nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(newName)}`;
+              nodeEl.innerHTML = `<i class="fas fa-link"></i> ${escapeHTML(
+                newName
+              )}`;
             }
           } else if (!nodeData.fileData) {
             // Apply text content changes
             const currentHtmlContent = nodeInputArea.innerHTML;
-            const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
-            
+            const currentTextContent =
+              nodeInputArea.textContent || nodeInputArea.innerText;
+
             // Update node data
             nodeData.contentHtml = currentHtmlContent;
             nodeData.contentText = currentTextContent;
@@ -1052,14 +1133,14 @@ plusBtn.addEventListener("click", (e) => {
             nodeData.name = newName;
             const nodeEl = document.getElementById(selectedNodeId);
             if (nodeEl) {
-              let fileIcon = '';
-              if (nodeData.fileData.type.startsWith('image/')) {
+              let fileIcon = "";
+              if (nodeData.fileData.type.startsWith("image/")) {
                 fileIcon = '<i class="fas fa-image"></i> ';
-              } else if (nodeData.fileData.type === 'application/pdf') {
+              } else if (nodeData.fileData.type === "application/pdf") {
                 fileIcon = '<i class="fas fa-file-pdf"></i> ';
-              } else if (nodeData.fileData.type.startsWith('video/')) {
+              } else if (nodeData.fileData.type.startsWith("video/")) {
                 fileIcon = '<i class="fas fa-video"></i> ';
-              } else if (nodeData.fileData.type.startsWith('audio/')) {
+              } else if (nodeData.fileData.type.startsWith("audio/")) {
                 fileIcon = '<i class="fas fa-music"></i> ';
               }
               nodeEl.innerHTML = fileIcon + escapeHTML(newName);
@@ -1067,7 +1148,8 @@ plusBtn.addEventListener("click", (e) => {
           }
         }
       } else {
-        const currentTextContent = nodeInputArea.textContent || nodeInputArea.innerText;
+        const currentTextContent =
+          nodeInputArea.textContent || nodeInputArea.innerText;
         const currentHtmlContent = nodeInputArea.innerHTML;
         if (currentTextContent.trim() || currentHtmlContent.trim()) {
           addNode("New Node", 70, 70, "#FFFFE0", currentHtmlContent);
@@ -1080,21 +1162,14 @@ plusBtn.addEventListener("click", (e) => {
   if (addNodeButton) {
     addNodeButton.addEventListener("click", () => {
       const canvasRect = mindMapContainer.getBoundingClientRect();
-      const canvasPane = document.querySelector('.canvas-pane');
+      const canvasPane = document.querySelector(".canvas-pane");
       const paneRect = canvasPane.getBoundingClientRect();
-      
+
       // Calculate the center of the visible area, taking into account zoom and pan
-      const centerX = (-panOffsetX + paneRect.width / (2 * currentZoom));
-      const centerY = (-panOffsetY + paneRect.height / (2 * currentZoom));
-      
-      addNode(
-        "New Canvas Node",
-        centerX,
-        centerY,
-        "#FFFFE0",
-        "",
-        null
-      );
+      const centerX = -panOffsetX + paneRect.width / (2 * currentZoom);
+      const centerY = -panOffsetY + paneRect.height / (2 * currentZoom);
+
+      addNode("New Canvas Node", centerX, centerY, "#FFFFE0", "", null);
       nodeInputArea.focus();
     });
   }
@@ -1104,16 +1179,20 @@ plusBtn.addEventListener("click", (e) => {
     connectNodesButton.addEventListener("click", () => {
       isConnectionMode = !isConnectionMode;
       connectionSourceNodeId = null;
-      connectNodesButton.classList.toggle('active');
-      
+      connectNodesButton.classList.toggle("active");
+
       // Remove any existing connection source highlighting
-      document.querySelectorAll(".node.connection-source").forEach((n) => n.classList.remove("connection-source"));
-      
+      document
+        .querySelectorAll(".node.connection-source")
+        .forEach((n) => n.classList.remove("connection-source"));
+
       // Update button text based on mode
       if (isConnectionMode) {
-        connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Click to Connect';
+        connectNodesButton.innerHTML =
+          '<i class="fas fa-project-diagram"></i> Click to Connect';
       } else {
-        connectNodesButton.innerHTML = '<i class="fas fa-project-diagram"></i> Connect Nodes';
+        connectNodesButton.innerHTML =
+          '<i class="fas fa-project-diagram"></i> Connect Nodes';
       }
     });
   }
@@ -1136,44 +1215,44 @@ plusBtn.addEventListener("click", (e) => {
 
   function searchNodes(query) {
     // Remove previous search highlights
-    document.querySelectorAll('.node.search-highlight').forEach(node => {
-      node.classList.remove('search-highlight');
+    document.querySelectorAll(".node.search-highlight").forEach((node) => {
+      node.classList.remove("search-highlight");
     });
 
     if (!query.trim()) {
       currentSearchResults = [];
       currentSearchIndex = -1;
-      document.querySelector('.search-navigation').classList.remove('active');
+      document.querySelector(".search-navigation").classList.remove("active");
       return;
     }
 
-    currentSearchResults = nodes.filter(node => 
+    currentSearchResults = nodes.filter((node) =>
       node.name.toLowerCase().includes(query.toLowerCase())
     );
 
     // Highlight matching nodes
-    currentSearchResults.forEach(node => {
+    currentSearchResults.forEach((node) => {
       const nodeElement = document.getElementById(node.id);
       if (nodeElement) {
-        nodeElement.classList.add('search-highlight');
+        nodeElement.classList.add("search-highlight");
       }
     });
 
     // Update navigation controls
-    const searchNav = document.querySelector('.search-navigation');
-    const resultCount = searchNav.querySelector('.result-count');
-    const prevBtn = document.getElementById('prevResultBtn');
-    const nextBtn = document.getElementById('nextResultBtn');
+    const searchNav = document.querySelector(".search-navigation");
+    const resultCount = searchNav.querySelector(".result-count");
+    const prevBtn = document.getElementById("prevResultBtn");
+    const nextBtn = document.getElementById("nextResultBtn");
 
     if (currentSearchResults.length > 0) {
-      searchNav.classList.add('active');
+      searchNav.classList.add("active");
       currentSearchIndex = 0;
       resultCount.textContent = `1/${currentSearchResults.length}`;
       prevBtn.disabled = true;
       nextBtn.disabled = currentSearchResults.length === 1;
       centerOnNode(currentSearchResults[0]);
     } else {
-      searchNav.classList.remove('active');
+      searchNav.classList.remove("active");
       currentSearchIndex = -1;
     }
 
@@ -1184,18 +1263,18 @@ plusBtn.addEventListener("click", (e) => {
     const nodeElement = document.getElementById(node.id);
     if (nodeElement) {
       selectNode(node.id);
-      
-      const canvasPane = document.querySelector('.canvas-pane');
+
+      const canvasPane = document.querySelector(".canvas-pane");
       const paneRect = canvasPane.getBoundingClientRect();
-      
+
       // Calculate the center position of the node
-      const nodeCenterX = node.x + (nodeElement.offsetWidth / 2);
-      const nodeCenterY = node.y + (nodeElement.offsetHeight / 2);
-      
+      const nodeCenterX = node.x + nodeElement.offsetWidth / 2;
+      const nodeCenterY = node.y + nodeElement.offsetHeight / 2;
+
       // Calculate the pan offset needed to center the node in the viewport
-      panOffsetX = (paneRect.width / (2 * currentZoom)) - nodeCenterX;
-      panOffsetY = (paneRect.height / (2 * currentZoom)) - nodeCenterY;
-      
+      panOffsetX = paneRect.width / (2 * currentZoom) - nodeCenterX;
+      panOffsetY = paneRect.height / (2 * currentZoom) - nodeCenterY;
+
       // Apply the transform
       mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
       updateMinimap();
@@ -1205,13 +1284,17 @@ plusBtn.addEventListener("click", (e) => {
   function navigateSearchResults(direction) {
     if (currentSearchResults.length === 0) return;
 
-    const prevBtn = document.getElementById('prevResultBtn');
-    const nextBtn = document.getElementById('nextResultBtn');
-    const resultCount = document.querySelector('.result-count');
+    const prevBtn = document.getElementById("prevResultBtn");
+    const nextBtn = document.getElementById("nextResultBtn");
+    const resultCount = document.querySelector(".result-count");
 
-    currentSearchIndex = (currentSearchIndex + direction + currentSearchResults.length) % currentSearchResults.length;
-    resultCount.textContent = `${currentSearchIndex + 1}/${currentSearchResults.length}`;
-    
+    currentSearchIndex =
+      (currentSearchIndex + direction + currentSearchResults.length) %
+      currentSearchResults.length;
+    resultCount.textContent = `${currentSearchIndex + 1}/${
+      currentSearchResults.length
+    }`;
+
     // Update button states
     prevBtn.disabled = currentSearchIndex === 0;
     nextBtn.disabled = currentSearchIndex === currentSearchResults.length - 1;
@@ -1223,7 +1306,7 @@ plusBtn.addEventListener("click", (e) => {
   // Search Input
   if (searchInput) {
     let searchTimeout;
-    searchInput.addEventListener('input', (e) => {
+    searchInput.addEventListener("input", (e) => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         const query = e.target.value.trim();
@@ -1232,13 +1315,13 @@ plusBtn.addEventListener("click", (e) => {
     });
 
     // Clear search on escape
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        searchInput.value = '';
-        document.querySelectorAll('.node.search-highlight').forEach(node => {
-          node.classList.remove('search-highlight');
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        searchInput.value = "";
+        document.querySelectorAll(".node.search-highlight").forEach((node) => {
+          node.classList.remove("search-highlight");
         });
-        document.querySelector('.search-navigation').classList.remove('active');
+        document.querySelector(".search-navigation").classList.remove("active");
         currentSearchResults = [];
         currentSearchIndex = -1;
       }
@@ -1246,24 +1329,24 @@ plusBtn.addEventListener("click", (e) => {
   }
 
   // Search Navigation Buttons
-  const prevResultBtn = document.getElementById('prevResultBtn');
-  const nextResultBtn = document.getElementById('nextResultBtn');
+  const prevResultBtn = document.getElementById("prevResultBtn");
+  const nextResultBtn = document.getElementById("nextResultBtn");
 
   if (prevResultBtn) {
-    prevResultBtn.addEventListener('click', () => navigateSearchResults(-1));
+    prevResultBtn.addEventListener("click", () => navigateSearchResults(-1));
   }
 
   if (nextResultBtn) {
-    nextResultBtn.addEventListener('click', () => navigateSearchResults(1));
+    nextResultBtn.addEventListener("click", () => navigateSearchResults(1));
   }
 
   // Keyboard navigation for search results
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener("keydown", (e) => {
     if (currentSearchResults.length > 0) {
-      if (e.key === 'ArrowUp') {
+      if (e.key === "ArrowUp") {
         e.preventDefault();
         navigateSearchResults(-1);
-      } else if (e.key === 'ArrowDown') {
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         navigateSearchResults(1);
       }
@@ -1271,83 +1354,82 @@ plusBtn.addEventListener("click", (e) => {
   });
 
   // ===== Initialization =====
-async function initializeStaticNodes() {
-  try {
-    const res = await fetch("initial-mindmap.json");
-    const state = await res.json();
+  async function initializeStaticNodes() {
+    try {
+      const res = await fetch("initial-mindmap.json");
+      const state = await res.json();
 
-    nodes = [];
-    connections = [];
-    nodeIdCounter = 0;
-    connectionIdCounter = 0;
+      nodes = [];
+      connections = [];
+      nodeIdCounter = 0;
+      connectionIdCounter = 0;
 
-    const centerX = mindMapContainer.offsetWidth / 2;
-    const centerY = mindMapContainer.offsetHeight / 2;
+      const centerX = mindMapContainer.offsetWidth / 2;
+      const centerY = mindMapContainer.offsetHeight / 2;
 
-    // Add nodes from JSON
-    state.nodes.forEach((node) => {
-      const newNode = addNode(
-        node.name,
-        node.x !== undefined ? node.x : centerX,
-        node.y !== undefined ? node.y : centerY,
-        node.color || "#FFFFE0",
-        node.contentHtml || "",
-        node.fileData || null,
-        node.linkData || null,
-        node.shape || "rectangle"
-      );
-      newNode.id = node.id; // override generated ID to match saved one
-    });
+      // Add nodes from JSON
+      state.nodes.forEach((node) => {
+        const newNode = addNode(
+          node.name,
+          node.x !== undefined ? node.x : centerX,
+          node.y !== undefined ? node.y : centerY,
+          node.color || "#FFFFE0",
+          node.contentHtml || "",
+          node.fileData || null,
+          node.linkData || null,
+          node.shape || "rectangle"
+        );
+        newNode.id = node.id; // override generated ID to match saved one
+        newNode.connections = node.connections || [];
+      });
 
-    // Sync nodeIdCounter with max ID
-    const maxNodeId = state.nodes.reduce((max, n) => {
-      const match = n.id?.match(/node-generated-(\d+)/);
-      return match ? Math.max(max, parseInt(match[1], 10)) : max;
-    }, 0);
-    nodeIdCounter = maxNodeId;
+      // Sync nodeIdCounter with max ID
+      const maxNodeId = state.nodes.reduce((max, n) => {
+        const match = n.id?.match(/node-generated-(\d+)/);
+        return match ? Math.max(max, parseInt(match[1], 10)) : max;
+      }, 0);
+      nodeIdCounter = maxNodeId;
 
-    // Add connections from JSON
-    state.connections.forEach((conn) => {
-      const newConn = addConnection(
-        conn.label,
-        conn.color,
-        conn.size,
-        conn.node1,
-        conn.node2
-      );
-      newConn.id = conn.id;
-      newConn.labelid = conn.labelid;
-    });
+      // Add connections from JSON
+      state.connections.forEach((conn) => {
+        const newConn = addConnection(
+          conn.label,
+          conn.color,
+          conn.size,
+          conn.node1,
+          conn.node2
+        );
+        newConn.id = conn.id;
+        newConn.labelid = conn.labelid;
+      });
 
-    // Sync connectionIdCounter with max ID
-    const maxConnId = state.connections.reduce((max, c) => {
-      const match = c.id?.match(/connection-generated-(\d+)/);
-      return match ? Math.max(max, parseInt(match[1], 10)) : max;
-    }, 0);
-    connectionIdCounter = maxConnId;
+      // Sync connectionIdCounter with max ID
+      const maxConnId = state.connections.reduce((max, c) => {
+        const match = c.id?.match(/connection-generated-(\d+)/);
+        return match ? Math.max(max, parseInt(match[1], 10)) : max;
+      }, 0);
+      connectionIdCounter = maxConnId;
 
-    updateConnections(); // Redraw lines
-    updateNodeSelectionVisual();
-
-  } catch (err) {
-    console.warn("Failed to load initial mindmap:", err);
+      updateConnections(); // Redraw lines
+      updateNodeSelectionVisual();
+    } catch (err) {
+      console.warn("Failed to load initial mindmap:", err);
+    }
   }
-}
-
 
   // Function to center the view on the canvas
   function centerView() {
-    const canvasPane = document.querySelector('.canvas-pane');
+    const canvasPane = document.querySelector(".canvas-pane");
     const paneRect = canvasPane.getBoundingClientRect();
-    
+
     // Calculate the center of the canvas
     const centerX = mindMapContainer.offsetWidth / 2;
     const centerY = mindMapContainer.offsetHeight / 2;
-    
+
     // Calculate the pan offset needed to center the view
-    panOffsetX = (paneRect.width / (2 * currentZoom)) - centerX;
-    panOffsetY = (paneRect.height / (2 * currentZoom)) - centerY;
-    
+    panOffsetX = paneRect.width / (2 * currentZoom) - centerX;
+    panOffsetY = paneRect.height / (2 * currentZoom) - centerY;
+
     // Apply the transform
     mindMapContainer.style.transform = `scale(${currentZoom}) translate(${panOffsetX}px, ${panOffsetY}px)`;
     updateMinimap();
@@ -1359,7 +1441,7 @@ async function initializeStaticNodes() {
   centerView(); // Center the view after initialization
 
   // Hide editor pane initially since no node is selected
-  document.querySelector('.editor-pane').classList.add('hidden');
+  document.querySelector(".editor-pane").classList.add("hidden");
 
   // Setup resize observer
   if (typeof ResizeObserver !== "undefined") {
@@ -1374,7 +1456,9 @@ async function initializeStaticNodes() {
     if (nodeInputArea.innerHTML.trim() === "") {
       nodeInputArea.classList.add("is-placeholder");
     }
-    nodeInputArea.addEventListener("focus", () => nodeInputArea.classList.remove("is-placeholder"));
+    nodeInputArea.addEventListener("focus", () =>
+      nodeInputArea.classList.remove("is-placeholder")
+    );
     nodeInputArea.addEventListener("blur", () => {
       if (nodeInputArea.innerHTML.trim() === "") {
         nodeInputArea.classList.add("is-placeholder");
@@ -1384,35 +1468,35 @@ async function initializeStaticNodes() {
 
   // Zoom Controls
   if (zoomInBtn) {
-    zoomInBtn.addEventListener('click', () => {
+    zoomInBtn.addEventListener("click", () => {
       updateZoom(currentZoom + 0.1);
     });
   }
 
   if (zoomOutBtn) {
-    zoomOutBtn.addEventListener('click', () => {
+    zoomOutBtn.addEventListener("click", () => {
       updateZoom(currentZoom - 0.1);
     });
   }
 
   if (resetZoomBtn) {
-    resetZoomBtn.addEventListener('click', () => {
+    resetZoomBtn.addEventListener("click", () => {
       currentZoom = 1;
       // Find the root node
-      const rootNode = nodes.find(n => n.id === "node-lap-trinh-web");
+      const rootNode = nodes.find((n) => n.id === "node-lap-trinh-web");
       if (rootNode) {
         const nodeElement = document.getElementById(rootNode.id);
         if (nodeElement) {
-          const canvasPane = document.querySelector('.canvas-pane');
+          const canvasPane = document.querySelector(".canvas-pane");
           const paneRect = canvasPane.getBoundingClientRect();
-          
+
           // Calculate the center position of the node
-          const nodeCenterX = rootNode.x + (nodeElement.offsetWidth / 2);
-          const nodeCenterY = rootNode.y + (nodeElement.offsetHeight / 2);
-          
+          const nodeCenterX = rootNode.x + nodeElement.offsetWidth / 2;
+          const nodeCenterY = rootNode.y + nodeElement.offsetHeight / 2;
+
           // Calculate the pan offset needed to center the node in the viewport
-          panOffsetX = (paneRect.width / 2) - nodeCenterX;
-          panOffsetY = (paneRect.height / 2) - nodeCenterY;
+          panOffsetX = paneRect.width / 2 - nodeCenterX;
+          panOffsetY = paneRect.height / 2 - nodeCenterY;
         }
       } else {
         // If no root node found, reset to default center
@@ -1424,18 +1508,18 @@ async function initializeStaticNodes() {
   }
 
   // Pan functionality
-  mindMapContainer.addEventListener('mousedown', (e) => {
+  mindMapContainer.addEventListener("mousedown", (e) => {
     // Only start panning if we're not clicking on a node and not in connection mode
-    if (!e.target.closest('.node') && !isConnectionMode) {
+    if (!e.target.closest(".node") && !isConnectionMode) {
       e.preventDefault();
       isPanning = true;
       panStartX = e.clientX - panOffsetX;
       panStartY = e.clientY - panOffsetY;
-      mindMapContainer.style.cursor = 'grabbing';
+      mindMapContainer.style.cursor = "grabbing";
     }
   });
 
-  document.addEventListener('mousemove', (e) => {
+  document.addEventListener("mousemove", (e) => {
     if (isPanning) {
       panOffsetX = e.clientX - panStartX;
       panOffsetY = e.clientY - panStartY;
@@ -1444,15 +1528,15 @@ async function initializeStaticNodes() {
     }
   });
 
-  document.addEventListener('mouseup', () => {
+  document.addEventListener("mouseup", () => {
     if (isPanning) {
       isPanning = false;
-      mindMapContainer.style.cursor = 'grab';
+      mindMapContainer.style.cursor = "grab";
     }
   });
 
   // Mouse wheel zoom
-  mindMapContainer.addEventListener('wheel', (e) => {
+  mindMapContainer.addEventListener("wheel", (e) => {
     if (e.ctrlKey) {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -1474,18 +1558,21 @@ async function initializeStaticNodes() {
     if (!minimapIndicator) return;
 
     const containerRect = mindMapContainer.getBoundingClientRect();
-    const canvasRect = document.querySelector('.canvas-pane').getBoundingClientRect();
-    
+    const canvasRect = document
+      .querySelector(".canvas-pane")
+      .getBoundingClientRect();
+
     // Calculate the visible portion of the mind map
     const visibleWidth = canvasRect.width / currentZoom;
     const visibleHeight = canvasRect.height / currentZoom;
-    
+
     // Calculate the scale factors for the minimap
     const scaleX = minimapIndicator.offsetWidth / mindMapContainer.offsetWidth;
-    const scaleY = minimapIndicator.offsetHeight / mindMapContainer.offsetHeight;
-    
+    const scaleY =
+      minimapIndicator.offsetHeight / mindMapContainer.offsetHeight;
+
     // Update viewport indicator
-    const viewport = minimapIndicator.querySelector('.minimap-viewport');
+    const viewport = minimapIndicator.querySelector(".minimap-viewport");
     if (viewport) {
       viewport.style.width = `${visibleWidth * scaleX}px`;
       viewport.style.height = `${visibleHeight * scaleY}px`;
@@ -1494,36 +1581,43 @@ async function initializeStaticNodes() {
     }
 
     // Create or update node indicators
-    let nodeContainer = minimapIndicator.querySelector('.minimap-nodes');
+    let nodeContainer = minimapIndicator.querySelector(".minimap-nodes");
     if (!nodeContainer) {
-      nodeContainer = document.createElement('div');
-      nodeContainer.className = 'minimap-nodes';
-      nodeContainer.style.position = 'absolute';
-      nodeContainer.style.top = '0';
-      nodeContainer.style.left = '0';
-      nodeContainer.style.width = '100%';
-      nodeContainer.style.height = '100%';
-      nodeContainer.style.pointerEvents = 'none';
+      nodeContainer = document.createElement("div");
+      nodeContainer.className = "minimap-nodes";
+      nodeContainer.style.position = "absolute";
+      nodeContainer.style.top = "0";
+      nodeContainer.style.left = "0";
+      nodeContainer.style.width = "100%";
+      nodeContainer.style.height = "100%";
+      nodeContainer.style.pointerEvents = "none";
       minimapIndicator.appendChild(nodeContainer);
     }
 
     // Clear existing node indicators
-    nodeContainer.innerHTML = '';
+    nodeContainer.innerHTML = "";
 
     // Add indicators for each node
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       const nodeEl = document.getElementById(node.id);
       if (nodeEl) {
-        const nodeIndicator = document.createElement('div');
-        nodeIndicator.className = 'minimap-node';
-        nodeIndicator.style.position = 'absolute';
-        nodeIndicator.style.width = `${Math.max(4, nodeEl.offsetWidth * scaleX)}px`;
-        nodeIndicator.style.height = `${Math.max(4, nodeEl.offsetHeight * scaleY)}px`;
+        const nodeIndicator = document.createElement("div");
+        nodeIndicator.className = "minimap-node";
+        nodeIndicator.style.position = "absolute";
+        nodeIndicator.style.width = `${Math.max(
+          4,
+          nodeEl.offsetWidth * scaleX
+        )}px`;
+        nodeIndicator.style.height = `${Math.max(
+          4,
+          nodeEl.offsetHeight * scaleY
+        )}px`;
         nodeIndicator.style.left = `${node.x * scaleX}px`;
         nodeIndicator.style.top = `${node.y * scaleY}px`;
-        nodeIndicator.style.backgroundColor = nodeEl.style.backgroundColor || '#FFFFE0';
-        nodeIndicator.style.borderRadius = '2px';
-        nodeIndicator.style.border = '1px solid rgba(0,0,0,0.2)';
+        nodeIndicator.style.backgroundColor =
+          nodeEl.style.backgroundColor || "#FFFFE0";
+        nodeIndicator.style.borderRadius = "2px";
+        nodeIndicator.style.border = "1px solid rgba(0,0,0,0.2)";
         nodeContainer.appendChild(nodeIndicator);
       }
     });
@@ -1533,25 +1627,28 @@ async function initializeStaticNodes() {
   function updateLinkPreview() {
     const url = linkUrlInput.value.trim();
     const description = linkDescriptionInput.value.trim();
-    
+
     if (url) {
       // Ensure URL has protocol
-      const fullUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+      const fullUrl =
+        url.startsWith("http://") || url.startsWith("https://")
+          ? url
+          : `https://${url}`;
       previewLink.href = fullUrl;
       previewLink.textContent = url;
       previewDescription.textContent = description;
-      linkPreview.style.display = 'block';
+      linkPreview.style.display = "block";
     } else {
-      linkPreview.style.display = 'none';
+      linkPreview.style.display = "none";
     }
   }
 
   // Add input event listeners for real-time preview
   if (linkUrlInput) {
-    linkUrlInput.addEventListener('input', updateLinkPreview);
+    linkUrlInput.addEventListener("input", updateLinkPreview);
   }
   if (linkDescriptionInput) {
-    linkDescriptionInput.addEventListener('input', updateLinkPreview);
+    linkDescriptionInput.addEventListener("input", updateLinkPreview);
   }
 });
 
@@ -1564,11 +1661,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (isVisible && !popup.contains(e.target)) {
       popup.style.display = "none";
-      document.querySelectorAll(".connector-line").forEach((line) =>
-      line.classList.remove("active-line")
-    );
+      document
+        .querySelectorAll(".connector-line")
+        .forEach((line) => line.classList.remove("active-line"));
     }
   });
 });
-
-
